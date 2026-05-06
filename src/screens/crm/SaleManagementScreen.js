@@ -35,9 +35,9 @@ const quickActions = [
     color: '#f59e0b',
   },
   {
-    id: 'add_customer',
-    title: 'ADD CUSTOMER',
-    icon: 'person-add-outline',
+    id: 'customer_balance',
+    title: 'CUSTOMER BALANCE',
+    icon: 'pie-chart-outline',
     color: '#9333ea',
   },
   {
@@ -94,14 +94,18 @@ const SaleManagementScreen = ({ navigation }) => {
   const handleActionPress = item => {
     if (item.id === 'new_order') {
       navigation.navigate('SalesGenerateOrderScreen');
-    } else if (item.id === 'add_customer') {
-      navigation.navigate('SalesAddCustomer');
+    } else if (item.id === 'customer_balance') {
+      navigation.navigate('CustomerBalanceScreen');
     } else if (item.id === 'contact') {
       navigation.navigate('CRMContactList');
     } else if (item.id === 'hospital') {
       navigation.navigate('CRMHospitalList');
     } else if (item.id === 'payment') {
       navigation.navigate('SalesPayment');
+    } else if (item.id === 'order_status') {
+      navigation.navigate('SalesTrackOrderStatus');
+    } else if (item.id === 'supply_info') {
+      navigation.navigate('SupplyInfoScreen');
     }
     // Handle other actions here
   };
@@ -115,19 +119,30 @@ const SaleManagementScreen = ({ navigation }) => {
         {/* TODAY'S PLAN SECTION */}
         <View style={styles.sectionHeaderContainer}>
           <Text style={styles.sectionTitle}>TODAY'S PLAN</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('HCMAttendance')}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('HCMAttendance')}
+          >
             <Text style={styles.sectionRightText}>ATTENDANCE</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.planCard}>
-          <TouchableOpacity 
-            style={styles.planHalf} 
+          <TouchableOpacity
+            style={styles.planHalf}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('SaleTask')}
           >
-            <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '1A' }]}>
-              <Icon name="calendar-outline" size={24} color={theme.colors.primary} />
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: theme.colors.primary + '1A' },
+              ]}
+            >
+              <Icon
+                name="calendar-outline"
+                size={24}
+                color={theme.colors.primary}
+              />
             </View>
             <View style={styles.planTextCol}>
               <Text style={styles.planCount}>
@@ -137,13 +152,22 @@ const SaleManagementScreen = ({ navigation }) => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.planHalf} 
+          <TouchableOpacity
+            style={styles.planHalf}
             activeOpacity={0.7}
             onPress={() => navigation.navigate('HCMAttendance')}
           >
-            <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '1A' }]}>
-              <Icon name="calendar-outline" size={24} color={theme.colors.primary} />
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: theme.colors.primary + '1A' },
+              ]}
+            >
+              <Icon
+                name="calendar-outline"
+                size={24}
+                color={theme.colors.primary}
+              />
             </View>
             <View style={styles.planTextCol}>
               <Text style={styles.planMainText}>Mark</Text>
@@ -218,8 +242,17 @@ const SaleManagementScreen = ({ navigation }) => {
               { backgroundColor: theme.colors.primary + '1A', marginRight: 16 },
             ]}
           >
-            <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '1A' }]}>
-              <Icon name="wallet-outline" size={24} color={theme.colors.primary} />
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: theme.colors.primary + '1A' },
+              ]}
+            >
+              <Icon
+                name="wallet-outline"
+                size={24}
+                color={theme.colors.primary}
+              />
             </View>
           </View>
           <View style={styles.expenseTextCol}>

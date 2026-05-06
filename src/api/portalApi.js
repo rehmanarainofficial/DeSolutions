@@ -48,6 +48,36 @@ export const portalApi = baseApi.injectEndpoints({
         };
       },
     }),
+    getOrderShippingInfo: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', body.company);
+        formData.append('user_id', body.user_id);
+        return {
+          url: 'portal/order_shiping_info.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
+    getOrderStatusListing: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', body.company);
+        formData.append('user_id', body.user_id);
+        return {
+          url: 'portal/order_status_listing.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
   }),
   overrideExisting: true,
 });
@@ -56,4 +86,6 @@ export const {
   useGetDebtorsMasterQuery,
   useLazyGetDebtorsMasterQuery,
   usePostServicePurchSaleMutation,
+  useGetOrderShippingInfoMutation,
+  useGetOrderStatusListingMutation,
 } = portalApi;

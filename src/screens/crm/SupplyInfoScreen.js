@@ -1,0 +1,476 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { useTheme } from '@config/useTheme';
+import { useSelector } from 'react-redux';
+import { useGetOrderShippingInfoMutation } from '@api/portalApi';
+import { selectCurrentUser } from '@store/slices/authSlice';
+
+const SupplyInfoScreen = ({ navigation }) => {
+  const { theme } = useTheme();
+  const styles = getStyles(theme);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [shipments, setShipments] = useState([]);
+
+  const { company } = useSelector(state => state.auth);
+  const user = useSelector(selectCurrentUser);
+
+  const [getOrderShippingInfo, { isLoading }] =
+    useGetOrderShippingInfoMutation();
+
+  const fetchShipments = async () => {
+    try {
+      const response = await getOrderShippingInfo({
+        company: user?.company_user_code || company,
+        user_id: user?.company_user_id || user?.id || '',
+      }).unwrap();
+
+      if (response && String(response.status) === 'true') {
+        setShipments(response.data || []);
+      }
+    } catch (error) {
+      console.log('Error fetching shipments:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchShipments();
+  }, []);
+
+  const filteredShipments = shipments.filter(item => {
+    const query = searchQuery.toLowerCase();
+    const customer = (item.customer || '').toLowerCase();
+    const orderNo = (item.order_no || '').toLowerCase();
+    const reference = (item.reference || '').toLowerCase();
+    const tracking = (item.tracking_no || '').toLowerCase();
+
+    return (
+      customer.includes(query) ||
+      orderNo.includes(query) ||
+      reference.includes(query) ||
+      tracking.includes(query)
+    );
+  });
+
+  const formatDate = dateString => {
+    if (
+      !dateString ||
+      dateString.includes('0000-00-00') ||
+      dateString.includes('0020-00-00')
+    )
+      return '-';
+    try {
+      const date = new Date(dateString);
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      return `${String(date.getDate()).padStart(2, '0')}-${
+        months[date.getMonth()]
+      }-${date.getFullYear()}`;
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const renderItem = ({ item }) => {
+    const isReceived = item.shipment_status === '1';
+    const statusText = isReceived ? 'Delivered' : 'In Transit';
+    const statusColor = isReceived ? '#10b981' : '#f59e0b';
+    const statusBg = isReceived ? '#d1fae5' : '#fef3c7';
+
+    return (
+      <View style={styles.card}>
+        {/* Header - Hospital Name & Status Badge */}
+        <View style={styles.cardHeader}>
+          <View style={styles.hospitalInfo}>
+            <View style={styles.hospitalIconBg}>
+              <Icon name="business" size={18} color="#3b82f6" />
+            </View>
+            <Text style={styles.hospitalName} numberOfLines={2}>
+              {item.customer}
+            </Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
+            <Text style={[styles.statusText, { color: statusColor }]}>
+              {statusText}
+            </Text>
+          </View>
+        </View>
+
+        {/* Total Amount & Reference - Stacked specifically for mobile */}
+        <View style={styles.amountReferenceSection}>
+          <View>
+            <Text style={styles.infoLabel}>Reference</Text>
+            <Text style={styles.infoValueDark}>{item.reference}</Text>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={styles.infoLabel}>Order Total</Text>
+            <Text style={styles.totalAmount}>
+              {parseFloat(item.total || 0).toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              })}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.divider} />
+
+        {/* Information Grid */}
+        <View style={styles.detailsGrid}>
+          {/* Row 1 */}
+          <View style={styles.infoCol}>
+            <Text style={styles.infoLabel}>Order Date</Text>
+            <Text style={styles.infoValue}>{formatDate(item.ord_date)}</Text>
+          </View>
+          <View style={styles.infoCol}>
+            <Text style={styles.infoLabel}>Dispatch Date</Text>
+            <View style={styles.highlightBadge}>
+              <Text style={styles.highlightBadgeText}>
+                {formatDate(item.tran_date)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Row 2 */}
+          <View style={styles.infoCol}>
+            <Text style={styles.infoLabel}>Shipment Date</Text>
+            <Text style={styles.infoValue}>
+              {formatDate(item.Shipment_date)}
+            </Text>
+          </View>
+          <View style={styles.infoCol}>
+            <Text style={[styles.infoLabel, { color: '#0ea5e9' }]}>
+              Tracking #
+            </Text>
+            <Text
+              style={[
+                styles.infoValue,
+                { color: '#0ea5e9', fontWeight: '700' },
+              ]}
+            >
+              {item.tracking_no || 'Not Available'}
+            </Text>
+          </View>
+
+          {/* Row 3 */}
+          <View style={styles.infoCol}>
+            <Text style={styles.infoLabel}>Ship Via</Text>
+            <Text style={styles.infoValue} numberOfLines={1}>
+              {item.shipper_name || '-'}
+            </Text>
+          </View>
+          <View style={styles.infoCol}>
+            <Text style={styles.infoLabel}>Received By</Text>
+            <Text style={styles.infoValue} numberOfLines={1}>
+              {item.person || '-'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Delivery Address Box */}
+        <View style={styles.addressCell}>
+          <Icon
+            name="location-outline"
+            size={18}
+            color="#ca8a04"
+            style={{ marginRight: 8, marginTop: 2 }}
+          />
+          <View style={{ flex: 1 }}>
+            <Text
+              style={[styles.infoLabel, { color: '#ca8a04', marginBottom: 2 }]}
+            >
+              Delivery Address
+            </Text>
+            <Text style={[styles.infoValue, { color: '#a16207' }]}>
+              {item.delivery_address || '-'}
+            </Text>
+          </View>
+        </View>
+
+        {/* View Details Button */}
+        <TouchableOpacity style={styles.detailBtn}>
+          <Text style={styles.detailBtnText}>View Details</Text>
+          <Icon name="arrow-forward-outline" size={16} color="#1e3a8a" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      {/* Header section optimized for mobile */}
+      <View style={styles.pageHeader}>
+        <Text style={styles.pageTitle}>Shipments</Text>
+        <Text style={styles.pageSubtitle}>Real-time tracking dashboard</Text>
+
+        <View style={styles.searchContainer}>
+          <Icon
+            name="search-outline"
+            size={20}
+            color={theme.colors.textSecondary}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search shipments..."
+            placeholderTextColor={theme.colors.textSecondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        <View style={styles.countBadge}>
+          <Text style={styles.countText}>
+            Showing {filteredShipments.length} records
+          </Text>
+        </View>
+      </View>
+
+      <FlatList
+        data={filteredShipments}
+        keyExtractor={(item, index) => item.order_no || index.toString()}
+        renderItem={renderItem}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={fetchShipments}
+            colors={[theme.colors.primary]}
+          />
+        }
+        ListEmptyComponent={
+          !isLoading && (
+            <View style={styles.emptyState}>
+              <Icon name="bus-outline" size={48} color={theme.colors.border} />
+              <Text style={styles.emptyStateText}>No shipments found.</Text>
+            </View>
+          )
+        }
+      />
+    </SafeAreaView>
+  );
+};
+
+const getStyles = theme =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: '#f8fafc',
+    },
+    pageHeader: {
+      backgroundColor: '#fff',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: '#f1f5f9',
+      zIndex: 10,
+      elevation: 2,
+    },
+    pageTitle: {
+      fontSize: 22,
+      fontWeight: '800',
+      color: '#0f172a',
+    },
+    pageSubtitle: {
+      fontSize: 13,
+      color: '#64748b',
+      marginBottom: 16,
+    },
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#f1f5f9',
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      height: 44,
+      marginBottom: 12,
+    },
+    searchIcon: {
+      marginRight: 8,
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: 14,
+      color: '#0f172a',
+      height: '100%',
+    },
+    countBadge: {
+      alignSelf: 'flex-start',
+    },
+    countText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: '#64748b',
+    },
+    listContent: {
+      padding: 16,
+      paddingBottom: 40,
+    },
+    card: {
+      backgroundColor: '#fff',
+      borderRadius: 16,
+      marginBottom: 16,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: '#f1f5f9',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 3,
+      elevation: 2,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 16,
+    },
+    hospitalInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      marginRight: 12,
+    },
+    hospitalIconBg: {
+      backgroundColor: '#eff6ff',
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 10,
+    },
+    hospitalName: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '800',
+      color: '#0f172a',
+    },
+    statusBadge: {
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      borderRadius: 12,
+    },
+    statusText: {
+      fontSize: 11,
+      fontWeight: '800',
+      textTransform: 'uppercase',
+    },
+    amountReferenceSection: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+      backgroundColor: '#f8fafc',
+      padding: 12,
+      borderRadius: 12,
+      marginBottom: 12,
+    },
+    totalAmount: {
+      fontSize: 20,
+      fontWeight: '800',
+      color: '#1e3a8a',
+      marginTop: 2,
+    },
+    infoValueDark: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: '#334155',
+      marginTop: 2,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: '#f1f5f9',
+      marginBottom: 12,
+    },
+    detailsGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      marginBottom: 4,
+    },
+    infoCol: {
+      width: '50%',
+      marginBottom: 16,
+      paddingRight: 8,
+    },
+    infoLabel: {
+      fontSize: 11,
+      color: '#64748b',
+      fontWeight: '600',
+      marginBottom: 4,
+      textTransform: 'uppercase',
+    },
+    infoValue: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: '#0f172a',
+    },
+    highlightBadge: {
+      backgroundColor: '#3b82f6',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+      alignSelf: 'flex-start',
+    },
+    highlightBadgeText: {
+      color: '#fff',
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    addressCell: {
+      flexDirection: 'row',
+      backgroundColor: '#fef9c3',
+      padding: 12,
+      borderRadius: 12,
+      marginBottom: 16,
+    },
+    detailBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#eff6ff',
+      paddingVertical: 12,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: '#dbeafe',
+    },
+    detailBtnText: {
+      color: '#1e3a8a',
+      fontSize: 14,
+      fontWeight: '700',
+      marginRight: 6,
+    },
+    emptyState: {
+      padding: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emptyStateText: {
+      marginTop: 12,
+      fontSize: 16,
+      color: theme.colors.textSecondary,
+    },
+  });
+
+export default SupplyInfoScreen;

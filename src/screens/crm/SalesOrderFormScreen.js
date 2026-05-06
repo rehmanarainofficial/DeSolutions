@@ -36,7 +36,9 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
   const [poNo, setPoNo] = useState('');
   const [poDate, setPoDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [shippingAddress, setShippingAddress] = useState('');
+  const [shippingAddress, setShippingAddress] = useState(
+    route.params?.customer?.shipping_address || route.params?.customer?.address || ''
+  );
   const [picture, setPicture] = useState(null);
   const [orderLoader, setOrderLoader] = useState(false);
 
@@ -257,7 +259,12 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
             placeholder="Choose a branch..."
             data={branches}
             selectedId={selectedBranch}
-            onSelect={item => setSelectedBranch(item.branch_code)}
+            onSelect={item => {
+              setSelectedBranch(item.branch_code);
+              if (item.br_address) {
+                setShippingAddress(item.br_address);
+              }
+            }}
             isLoading={branchLoading}
             idKey="branch_code"
             labelKey="br_name"
