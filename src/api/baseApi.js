@@ -3,9 +3,12 @@ import { API_BASE_URL } from '@env';
 
 export const baseApi = createApi({
   reducerPath: 'api',
-  baseQuery: fetchBaseQuery({
-    baseUrl: API_BASE_URL,
-  }),
+  baseQuery: (...args) => {
+    const baseUrl = API_BASE_URL;
+    return fetchBaseQuery({
+      baseUrl: baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`,
+    })(...args);
+  },
   tagTypes: ['User', 'Auth', 'Dashboard', 'Dimension'],
   keepUnusedDataFor: 600, // 10 minutes cache
   endpoints: builder => ({
@@ -205,13 +208,13 @@ export const baseApi = createApi({
       },
     }),
     getCustBranchDropdown: builder.mutation({
-      query: (body) => {
+      query: body => {
         const formData = new FormData();
         formData.append('company', body.company);
         formData.append('person_id', body.person_id);
-        
+
         return {
-          url: 'mobile/dropdown/cust_branch.php',
+          url: 'dropdown/cust_branch.php',
           method: 'POST',
           body: formData,
           headers: {

@@ -14,7 +14,10 @@ import Modal from 'react-native-modal';
 import Toast from 'react-native-toast-message';
 import { useTheme } from '@config/useTheme';
 import { useSelector } from 'react-redux';
-import { useGetStockMasterDropdownMutation, useGetCustBranchDropdownMutation } from '@api/baseApi';
+import {
+  useGetStockMasterDropdownMutation,
+  useGetCustBranchDropdownMutation,
+} from '@api/baseApi';
 import { CustomDatePicker, SearchableDropdown } from '@components/common';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { usePostServicePurchSaleMutation } from '@api/portalApi';
@@ -38,14 +41,16 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
   const [orderLoader, setOrderLoader] = useState(false);
 
   const { company } = useSelector(state => state.auth);
+
   const user = useSelector(selectCurrentUser);
   const [getStockMaster] = useGetStockMasterDropdownMutation();
   const [postOrder] = usePostServicePurchSaleMutation();
   const [products, setProducts] = useState([]);
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState(null);
-  
-  const [getCustBranchDropdown, { isLoading: branchLoading }] = useGetCustBranchDropdownMutation();
+
+  const [getCustBranchDropdown, { isLoading: branchLoading }] =
+    useGetCustBranchDropdownMutation();
 
   React.useEffect(() => {
     fetchProducts();
@@ -54,7 +59,8 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
 
   const fetchBranches = async () => {
     const customer = route.params?.customer || {};
-    const personId = customer.person_id || customer.customer_id;
+    const personId = customer.person_id;
+
     if (personId) {
       try {
         const response = await getCustBranchDropdown({
@@ -72,8 +78,8 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
 
   const fetchProducts = async () => {
     try {
-      const response = await getStockMaster({ 
-        company: user?.company_user_code || company 
+      const response = await getStockMaster({
+        company: user?.company_user_code || company,
       }).unwrap();
       if (response && response.data) {
         setProducts(response.data);
@@ -168,20 +174,21 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
 
       const payload = {
         order_no: '0',
-        person_id: customer.person_id || customer.customer_id || '',
+        person_id: customer.person_id,
         trans_type: '30',
         ord_date: formatDate(new Date()),
         po_no: poNo,
         po_date: formatDate(poDate),
-        loc_code: selectedBranch || customer.loc_code || '',
+        loc_code: selectedBranch,
+        branch_code: selectedBranch,
         total: String(grandTotal),
         price_list: customer.price_list || '',
         ship_via: customer.ship_via || '',
         memo: '',
         purch_order_details: JSON.stringify(purch_order_details),
-        user_id: user?.company_user_id || user?.id || '', 
+        user_id: user?.company_user_id || '',
         shiping_address: shippingAddress,
-        company: user?.company_user_code || company || '',
+        company: user?.company_user_code || '',
         image: picture,
         salesman: customer.salesman || '',
         payments: customer.payments || customer.payment_terms || '',
