@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react';
 import { StatusBar, LogBox } from 'react-native';
 
-LogBox.ignoreLogs([
-  'InteractionManager has been deprecated',
-]);
+LogBox.ignoreLogs(['InteractionManager has been deprecated']);
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
@@ -33,7 +31,6 @@ const AppContent = () => {
             2,
             '0',
           )}-${String(d.getDate()).padStart(2, '0')}`;
-
         store.dispatch(
           dashboardApi.endpoints.getFinancialOverview.initiate({ company }),
         );

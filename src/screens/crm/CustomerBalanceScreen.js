@@ -125,6 +125,7 @@ const CustomerBalanceRow = ({ item, theme }) => {
 
 const CustomerBalanceScreen = () => {
   const { theme } = useTheme();
+  const styles = getStyles(theme);
   const user = useSelector(selectCurrentUser);
 
   const { data, isLoading, isFetching, refetch, error } =
@@ -190,41 +191,41 @@ const CustomerBalanceScreen = () => {
         >
           {/* Total Customers */}
           <View style={styles.statCard}>
-            <View style={[styles.statIconBg, { backgroundColor: '#eff6ff' }]}>
-              <Icon name="people" size={20} color="#1e3a8a" />
+            <View style={[styles.statIconBg, { backgroundColor: theme.colors.primary + '1A' }]}>
+              <Icon name="people" size={20} color={theme.colors.primary} />
             </View>
             <Text style={styles.statLabel}>TOTAL CUSTOMERS</Text>
             <Text style={styles.statValueDark}>{totalCustomers}</Text>
             <View style={styles.statFooterRow}>
-              <Icon name="person" size={12} color="#64748b" />
+              <Icon name="person" size={12} color={theme.colors.textSecondary} />
               <Text style={styles.statFooterText}>Active accounts</Text>
             </View>
           </View>
 
           {/* Total Due */}
           <View style={styles.statCard}>
-            <View style={[styles.statIconBg, { backgroundColor: '#fef2f2' }]}>
-              <Icon name="warning" size={20} color="#dc2626" />
+            <View style={[styles.statIconBg, { backgroundColor: theme.colors.error + '1A' }]}>
+              <Icon name="warning" size={20} color={theme.colors.error} />
             </View>
             <Text style={styles.statLabel}>TOTAL DUE</Text>
             <Text style={styles.statValueRed}>{formatNumber(totalDue)}</Text>
             <View style={styles.statFooterRow}>
-              <Icon name="time" size={12} color="#64748b" />
+              <Icon name="time" size={12} color={theme.colors.textSecondary} />
               <Text style={styles.statFooterText}>Overdue + Current Due</Text>
             </View>
           </View>
 
           {/* Total Outstanding */}
           <View style={styles.statCard}>
-            <View style={[styles.statIconBg, { backgroundColor: '#f0fdf4' }]}>
-              <Icon name="pie-chart" size={20} color="#16a34a" />
+            <View style={[styles.statIconBg, { backgroundColor: theme.colors.success + '1A' || '#dcfce7' }]}>
+              <Icon name="pie-chart" size={20} color={theme.colors.success || '#16a34a'} />
             </View>
             <Text style={styles.statLabel}>TOTAL OUTSTANDING</Text>
             <Text style={styles.statValueGreen}>
               {formatNumber(totalOutstanding)}
             </Text>
             <View style={styles.statFooterRow}>
-              <Icon name="trending-up" size={12} color="#64748b" />
+              <Icon name="trending-up" size={12} color={theme.colors.textSecondary} />
               <Text style={styles.statFooterText}>Total receivables</Text>
             </View>
           </View>
@@ -238,7 +239,7 @@ const CustomerBalanceScreen = () => {
             <Icon
               name="people"
               size={20}
-              color="#1e3a8a"
+              color={theme.colors.primary}
               style={{ marginRight: 8 }}
             />
             <Text style={styles.portfolioTitle}>Customer Portfolio</Text>
@@ -252,7 +253,7 @@ const CustomerBalanceScreen = () => {
           <Icon
             name="stats-chart"
             size={12}
-            color="#0f172a"
+            color={theme.colors.text}
             style={{ marginRight: 6 }}
           />
           <Text style={styles.ledgerAccessText}>Ledger / Detail Access</Text>
@@ -321,9 +322,9 @@ const getRowStyles = theme =>
     rowContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#fff',
+      backgroundColor: theme.colors.surface,
       borderBottomWidth: 1,
-      borderBottomColor: '#f1f5f9',
+      borderBottomColor: theme.colors.border,
       paddingVertical: 12,
       paddingHorizontal: 16,
     },
@@ -334,7 +335,7 @@ const getRowStyles = theme =>
     customerName: {
       fontSize: 13,
       fontWeight: '800',
-      color: '#0f172a',
+      color: theme.colors.text,
       marginBottom: 4,
       textTransform: 'uppercase',
     },
@@ -346,28 +347,28 @@ const getRowStyles = theme =>
     badgeAdvance: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#dcfce7',
+      backgroundColor: theme.colors.success + '1A' || '#dcfce7',
       paddingHorizontal: 6,
       paddingVertical: 2,
       borderRadius: 12,
     },
     badgeAdvanceText: {
       fontSize: 9,
-      color: '#15803d',
+      color: theme.colors.success || '#15803d',
       fontWeight: '600',
       marginLeft: 2,
     },
     badgeLimit: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#eff6ff',
+      backgroundColor: theme.colors.primary + '1A',
       paddingHorizontal: 6,
       paddingVertical: 2,
       borderRadius: 12,
     },
     badgeLimitText: {
       fontSize: 9,
-      color: '#1d4ed8',
+      color: theme.colors.primary,
       fontWeight: '600',
       marginLeft: 2,
     },
@@ -379,7 +380,7 @@ const getRowStyles = theme =>
     },
     cityText: {
       fontSize: 12,
-      color: '#334155',
+      color: theme.colors.text,
       fontWeight: '500',
       flex: 1,
     },
@@ -390,11 +391,11 @@ const getRowStyles = theme =>
     balanceLabel: {
       fontSize: 11,
       fontWeight: '700',
-      color: '#0f172a',
+      color: theme.colors.text,
       marginBottom: 2,
     },
     balanceValueRed: {
-      color: '#dc2626',
+      color: theme.colors.error,
     },
     colActions: {
       flex: 1,
@@ -405,9 +406,9 @@ const getRowStyles = theme =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#f8fafc',
+      backgroundColor: theme.colors.background,
       borderWidth: 1,
-      borderColor: '#e2e8f0',
+      borderColor: theme.colors.border,
       borderRadius: 16,
       paddingVertical: 6,
       paddingHorizontal: 8,
@@ -416,25 +417,25 @@ const getRowStyles = theme =>
     actionBtnText: {
       fontSize: 9,
       fontWeight: '700',
-      color: '#0f172a',
+      color: theme.colors.text,
     },
   });
 
-const styles = StyleSheet.create({
+const getStyles = theme => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.colors.background,
   },
   statsContainer: {
     padding: 16,
     gap: 12,
   },
   statCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: theme.colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -452,25 +453,25 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#64748b',
+    color: theme.colors.textSecondary,
     marginBottom: 4,
   },
   statValueDark: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#0f172a',
+    color: theme.colors.text,
     marginBottom: 8,
   },
   statValueRed: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#dc2626',
+    color: theme.colors.error,
     marginBottom: 8,
   },
   statValueGreen: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#16a34a',
+    color: theme.colors.success || '#16a34a',
     marginBottom: 8,
   },
   statFooterRow: {
@@ -479,11 +480,11 @@ const styles = StyleSheet.create({
   },
   statFooterText: {
     fontSize: 11,
-    color: '#64748b',
+    color: theme.colors.textSecondary,
     marginLeft: 6,
   },
   portfolioHeader: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -491,7 +492,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: theme.colors.border,
     marginHorizontal: 8,
     marginTop: 8,
   },
@@ -503,18 +504,18 @@ const styles = StyleSheet.create({
   portfolioTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0f172a',
+    color: theme.colors.text,
   },
   portfolioSubtitle: {
     fontSize: 11,
-    color: '#64748b',
+    color: theme.colors.textSecondary,
   },
   ledgerAccessBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.colors.background,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.colors.border,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
@@ -522,21 +523,21 @@ const styles = StyleSheet.create({
   ledgerAccessText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#0f172a',
+    color: theme.colors.text,
   },
   tableHeaderRow: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.surface,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: theme.colors.border,
     marginHorizontal: 8,
   },
   tableHeaderLabel: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#0f172a',
+    color: theme.colors.text,
   },
   centerMsg: {
     flex: 1,
@@ -547,7 +548,7 @@ const styles = StyleSheet.create({
   retryBtn: {
     marginTop: 16,
     padding: 10,
-    backgroundColor: '#1e3a8a',
+    backgroundColor: theme.colors.primary,
     borderRadius: 8,
   },
 });

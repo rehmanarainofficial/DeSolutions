@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@config/useTheme';
+import { generateAndShareStatementPDF } from '../../utils/pdfGenerator';
 import { useGetDebtorsMasterQuery } from '@api/portalApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@store/slices/authSlice';
@@ -171,6 +172,28 @@ const CustomerCard = ({ item, theme }) => {
               style={[styles.actionBtnText, { color: theme.colors.primary }]}
             >
               Outstanding
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              {
+                borderColor: theme.colors.primary,
+                backgroundColor: theme.colors.primary + '0D',
+              },
+            ]}
+            onPress={() => generateAndShareStatementPDF(cleanName, item.payment_terms || 0)}
+          >
+            <Icon
+              name="share-social"
+              size={16}
+              color={theme.colors.primary}
+            />
+            <Text
+              style={[styles.actionBtnText, { color: theme.colors.primary }]}
+            >
+              Share PDF
             </Text>
           </TouchableOpacity>
         </View>

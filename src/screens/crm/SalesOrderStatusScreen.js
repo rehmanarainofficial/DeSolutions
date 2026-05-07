@@ -183,9 +183,9 @@ const SalesOrderStatusScreen = () => {
     >
       <View style={styles.headerArea}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-          {renderFilterButton('TOTAL ORDERS', totalOrders, 'bar-chart', '#1e40af', 'ALL')}
-          {renderFilterButton('APPROVED', approvedCount, 'checkmark-circle', '#10b981', 'APPROVED')}
-          {renderFilterButton('UNAPPROVED', unapprovedCount, 'warning', '#ef4444', 'UNAPPROVED')}
+          {renderFilterButton('TOTAL ORDERS', totalOrders, 'bar-chart', theme.colors.primary, 'ALL')}
+          {renderFilterButton('APPROVED', approvedCount, 'checkmark-circle', theme.colors.success || '#10b981', 'APPROVED')}
+          {renderFilterButton('UNAPPROVED', unapprovedCount, 'warning', theme.colors.error, 'UNAPPROVED')}
           
           <TouchableOpacity 
             style={[styles.filterButton, { justifyContent: 'center' }]}
@@ -194,8 +194,8 @@ const SalesOrderStatusScreen = () => {
               setSearchQuery('');
             }}
           >
-            <Icon name="close-circle" size={16} color="#64748b" style={{marginRight: 4}} />
-            <Text style={{color: '#64748b', fontWeight: '700'}}>Clear Filter</Text>
+            <Icon name="close-circle" size={16} color={theme.colors.textSecondary} style={{marginRight: 4}} />
+            <Text style={{color: theme.colors.textSecondary, fontWeight: '700'}}>Clear Filter</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -225,13 +225,13 @@ const SalesOrderStatusScreen = () => {
 const getStyles = theme => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.colors.background,
   },
   headerArea: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.surface,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: theme.colors.border,
     elevation: 2,
     zIndex: 10,
   },
@@ -242,9 +242,9 @@ const getStyles = theme => StyleSheet.create({
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.colors.border,
     borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -256,7 +256,7 @@ const getStyles = theme => StyleSheet.create({
   filterTitle: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#64748b',
+    color: theme.colors.textSecondary,
     textTransform: 'uppercase',
   },
   filterCount: {
@@ -268,10 +268,10 @@ const getStyles = theme => StyleSheet.create({
     paddingBottom: 40,
   },
   orderCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: theme.colors.border,
     padding: 16,
     marginBottom: 16,
     shadowColor: '#000',
@@ -283,7 +283,7 @@ const getStyles = theme => StyleSheet.create({
   branchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.colors.primary + '10',
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderRadius: 12,
@@ -294,14 +294,14 @@ const getStyles = theme => StyleSheet.create({
   },
   branchLabel: {
     fontSize: 12,
-    color: '#1e40af',
+    color: theme.colors.primary,
     fontWeight: '600',
     marginRight: 6,
   },
   branchValue: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#1e3a8a',
+    color: theme.colors.primary,
     flex: 1,
   },
   detailsGrid: {
@@ -314,7 +314,7 @@ const getStyles = theme => StyleSheet.create({
   },
   detailCell: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.colors.background,
     borderRadius: 12,
     padding: 12,
     marginHorizontal: 4,
@@ -330,20 +330,20 @@ const getStyles = theme => StyleSheet.create({
   detailLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#64748b',
+    color: theme.colors.textSecondary,
   },
   detailValue: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#0f172a',
+    color: theme.colors.text,
   },
   divider: {
     height: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.colors.border,
     marginVertical: 12,
     borderStyle: 'dashed',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.colors.border,
   },
   amountSection: {
     alignItems: 'center',
@@ -355,20 +355,20 @@ const getStyles = theme => StyleSheet.create({
   amountLabel: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#64748b',
+    color: theme.colors.textSecondary,
     letterSpacing: 1,
     marginBottom: 4,
   },
   amountValue: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#0f172a',
+    color: theme.colors.text,
   },
   viewDetailsBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1e3a8a',
+    backgroundColor: theme.colors.primary,
     paddingVertical: 12,
     width: '100%',
     borderRadius: 24,
@@ -385,7 +385,7 @@ const getStyles = theme => StyleSheet.create({
   },
   emptyStateText: {
     marginTop: 16,
-    color: '#64748b',
+    color: theme.colors.textSecondary,
     fontSize: 14,
   }
 });

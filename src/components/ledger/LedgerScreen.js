@@ -5,12 +5,15 @@ import {
   StyleSheet,
   FlatList,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Orientation from 'react-native-orientation-locker';
 import { useTheme } from '@config/useTheme';
 import { DateFilter, LoadingSpinner, PersonDropdown, GLAccountDropdown, CounterPartyDropdown, DimensionDropdown } from '@components/common';
 import { useGetGLAccountInquiryMutation } from '@api/ledgerApi';
+import { generateAndShareStatementPDF } from '../../utils/pdfGenerator';
 
 const LedgerScreen = ({ route, navigation }) => {
   const { account: initialAccount, title, fromDate: pFromDate, toDate: pToDate, personId: initialPersonId, type, company: pCompany } = route.params || {};
@@ -129,7 +132,7 @@ const LedgerScreen = ({ route, navigation }) => {
 
   const renderHeader = () => (
     <View style={s.summaryContainer}>
-      <View style={[s.summaryCard, { backgroundColor: theme.colors.surface }]}>
+      <View style={[s.summaryCard, { flex: 0.42, backgroundColor: theme.colors.surface }]}>
         <Text style={[s.summaryLabel, { color: theme.colors.textSecondary }]}>
           Opening Balance
         </Text>
@@ -137,7 +140,7 @@ const LedgerScreen = ({ route, navigation }) => {
           {parseFloat(opening).toLocaleString()}
         </Text>
       </View>
-      <View style={[s.summaryCard, { backgroundColor: theme.colors.surface }]}>
+      <View style={[s.summaryCard, { flex: 0.42, backgroundColor: theme.colors.surface }]}>
         <Text style={[s.summaryLabel, { color: theme.colors.textSecondary }]}>
           Closing Balance
         </Text>
@@ -145,6 +148,12 @@ const LedgerScreen = ({ route, navigation }) => {
           {calculateClosing()}
         </Text>
       </View>
+      <TouchableOpacity 
+        style={[s.summaryCard, { flex: 0.12, backgroundColor: theme.colors.primary, justifyContent: 'center' }]}
+        onPress={() => generateAndShareStatementPDF()}
+      >
+        <Icon name="share-social" size={20} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 

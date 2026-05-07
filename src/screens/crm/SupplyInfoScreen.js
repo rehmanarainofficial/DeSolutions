@@ -105,7 +105,7 @@ const SupplyInfoScreen = ({ navigation }) => {
         <View style={styles.cardHeader}>
           <View style={styles.hospitalInfo}>
             <View style={styles.hospitalIconBg}>
-              <Icon name="business" size={18} color="#3b82f6" />
+              <Icon name="business" size={18} color={theme.colors.primary} />
             </View>
             <Text style={styles.hospitalName} numberOfLines={2}>
               {item.customer}
@@ -161,13 +161,13 @@ const SupplyInfoScreen = ({ navigation }) => {
             </Text>
           </View>
           <View style={styles.infoCol}>
-            <Text style={[styles.infoLabel, { color: '#0ea5e9' }]}>
+            <Text style={[styles.infoLabel, { color: theme.colors.primary }]}>
               Tracking #
             </Text>
             <Text
               style={[
                 styles.infoValue,
-                { color: '#0ea5e9', fontWeight: '700' },
+                { color: theme.colors.primary, fontWeight: '700' },
               ]}
             >
               {item.tracking_no || 'Not Available'}
@@ -212,7 +212,7 @@ const SupplyInfoScreen = ({ navigation }) => {
         {/* View Details Button */}
         <TouchableOpacity style={styles.detailBtn}>
           <Text style={styles.detailBtnText}>View Details</Text>
-          <Icon name="arrow-forward-outline" size={16} color="#1e3a8a" />
+          <Icon name="arrow-forward-outline" size={16} color={theme.colors.primary} />
         </TouchableOpacity>
       </View>
     );
@@ -278,34 +278,36 @@ const getStyles = theme =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#f8fafc',
+      backgroundColor: theme.colors.background,
     },
     pageHeader: {
-      backgroundColor: '#fff',
+      backgroundColor: theme.colors.surface,
       padding: 16,
       borderBottomWidth: 1,
-      borderBottomColor: '#f1f5f9',
+      borderBottomColor: theme.colors.border,
       zIndex: 10,
       elevation: 2,
     },
     pageTitle: {
       fontSize: 22,
       fontWeight: '800',
-      color: '#0f172a',
+      color: theme.colors.text,
     },
     pageSubtitle: {
       fontSize: 13,
-      color: '#64748b',
+      color: theme.colors.textSecondary,
       marginBottom: 16,
     },
     searchContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#f1f5f9',
+      backgroundColor: theme.colors.background,
       borderRadius: 12,
       paddingHorizontal: 12,
       height: 44,
       marginBottom: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
     },
     searchIcon: {
       marginRight: 8,
@@ -313,7 +315,7 @@ const getStyles = theme =>
     searchInput: {
       flex: 1,
       fontSize: 14,
-      color: '#0f172a',
+      color: theme.colors.text,
       height: '100%',
     },
     countBadge: {
@@ -322,19 +324,19 @@ const getStyles = theme =>
     countText: {
       fontSize: 12,
       fontWeight: '600',
-      color: '#64748b',
+      color: theme.colors.textSecondary,
     },
     listContent: {
       padding: 16,
       paddingBottom: 40,
     },
     card: {
-      backgroundColor: '#fff',
+      backgroundColor: theme.colors.surface,
       borderRadius: 16,
       marginBottom: 16,
       padding: 16,
       borderWidth: 1,
-      borderColor: '#f1f5f9',
+      borderColor: theme.colors.border,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.05,
@@ -354,7 +356,7 @@ const getStyles = theme =>
       marginRight: 12,
     },
     hospitalIconBg: {
-      backgroundColor: '#eff6ff',
+      backgroundColor: theme.colors.primary + '1A',
       width: 36,
       height: 36,
       borderRadius: 10,
@@ -366,7 +368,7 @@ const getStyles = theme =>
       flex: 1,
       fontSize: 16,
       fontWeight: '800',
-      color: '#0f172a',
+      color: theme.colors.text,
     },
     statusBadge: {
       paddingVertical: 6,
@@ -382,7 +384,7 @@ const getStyles = theme =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-end',
-      backgroundColor: '#f8fafc',
+      backgroundColor: theme.colors.background,
       padding: 12,
       borderRadius: 12,
       marginBottom: 12,
@@ -390,18 +392,18 @@ const getStyles = theme =>
     totalAmount: {
       fontSize: 20,
       fontWeight: '800',
-      color: '#1e3a8a',
+      color: theme.colors.primary,
       marginTop: 2,
     },
     infoValueDark: {
       fontSize: 14,
       fontWeight: '700',
-      color: '#334155',
+      color: theme.colors.text,
       marginTop: 2,
     },
     divider: {
       height: 1,
-      backgroundColor: '#f1f5f9',
+      backgroundColor: theme.colors.border,
       marginBottom: 12,
     },
     detailsGrid: {
@@ -416,7 +418,7 @@ const getStyles = theme =>
     },
     infoLabel: {
       fontSize: 11,
-      color: '#64748b',
+      color: theme.colors.textSecondary,
       fontWeight: '600',
       marginBottom: 4,
       textTransform: 'uppercase',
@@ -424,10 +426,10 @@ const getStyles = theme =>
     infoValue: {
       fontSize: 13,
       fontWeight: '600',
-      color: '#0f172a',
+      color: theme.colors.text,
     },
     highlightBadge: {
-      backgroundColor: '#3b82f6',
+      backgroundColor: theme.colors.primary,
       paddingHorizontal: 8,
       paddingVertical: 4,
       borderRadius: 6,
@@ -440,7 +442,7 @@ const getStyles = theme =>
     },
     addressCell: {
       flexDirection: 'row',
-      backgroundColor: '#fef9c3',
+      backgroundColor: '#fef9c3', // keep specific alert color
       padding: 12,
       borderRadius: 12,
       marginBottom: 16,
@@ -449,14 +451,14 @@ const getStyles = theme =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#eff6ff',
+      backgroundColor: theme.colors.primary + '1A',
       paddingVertical: 12,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: '#dbeafe',
+      borderColor: theme.colors.primary + '33',
     },
     detailBtnText: {
-      color: '#1e3a8a',
+      color: theme.colors.primary,
       fontSize: 14,
       fontWeight: '700',
       marginRight: 6,

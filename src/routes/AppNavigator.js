@@ -165,7 +165,7 @@ const AppNavigator = () => {
             />
             <Stack.Screen name="CRM" component={CRMScreen} />
             <Stack.Screen name="SalesCRM" component={SalesCRMScreen} />
-            <Stack.Screen name="SalesGenerateOrderScreen" component={SalesGenerateOrderScreen} />
+            <Stack.Screen name="SalesGenerateOrderScreen" component={SalesGenerateOrderScreen} options={{ title: 'Sale Generate Order' }} />
             <Stack.Screen name="SaleManagement" component={SaleManagementScreen} />
             <Stack.Screen name="SaleTask" component={SaleTaskScreen} options={{ title: 'Task Today' }} />
             <Stack.Screen name="SupplyInfoScreen" component={SupplyInfoScreen} options={{ title: 'Supply Information' }} />
