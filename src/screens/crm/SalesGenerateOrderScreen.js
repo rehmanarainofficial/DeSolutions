@@ -13,17 +13,55 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@config/useTheme';
 import { generateAndShareStatementPDF } from '../../utils/pdfGenerator';
-import { useGetDebtorsMasterQuery } from '@api/portalApi';
+import {
+  useGetDebtorsMasterQuery,
+  useGetOutstandingReportMutation,
+} from '@api/portalApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@store/slices/authSlice';
 
 const CustomerCard = ({ item, theme }) => {
+  console.log(item);
+
   const styles = getCardStyles(theme);
   const navigation = useNavigation();
   const user = useSelector(selectCurrentUser);
 
   const cleanName = item.name ? item.name.replace(/&amp;/g, '&') : '';
   const displayName = item.city ? `${cleanName} , ${item.city}` : cleanName;
+
+  const [getOutstandingReport, { isLoading: isReportLoading }] =
+    useGetOutstandingReportMutation();
+
+  const handleSharePDF = async () => {
+    try {
+      const res = await getOutstandingReport({
+        company: user?.company_user_code,
+        customer_id: item.person_id,
+      }).unwrap();
+
+      if (res && String(res.status) === 'true') {
+        await generateAndShareStatementPDF(
+          cleanName,
+          item.payment_terms || 0,
+          res.data || [],
+        );
+      } else {
+        await generateAndShareStatementPDF(
+          cleanName,
+          item.payment_terms || 0,
+          [],
+        );
+      }
+    } catch (e) {
+      console.log('Error fetching outstanding report:', e);
+      await generateAndShareStatementPDF(
+        cleanName,
+        item.payment_terms || 0,
+        [],
+      );
+    }
+  };
 
   return (
     <View style={styles.cardContainer}>
@@ -56,7 +94,7 @@ const CustomerCard = ({ item, theme }) => {
               <Text style={styles.detailLabel}>OUTSTANDING</Text>
             </View>
             <Text style={styles.detailValueRed}>
-              {Math.floor(item.outstanding || 0)}
+              {Math.floor(item.outstanding || 0).toLocaleString()}
             </Text>
           </TouchableOpacity>
 
@@ -183,13 +221,18 @@ const CustomerCard = ({ item, theme }) => {
                 backgroundColor: theme.colors.primary + '0D',
               },
             ]}
-            onPress={() => generateAndShareStatementPDF(cleanName, item.payment_terms || 0)}
+            onPress={handleSharePDF}
+            disabled={isReportLoading}
           >
-            <Icon
-              name="share-social"
-              size={16}
-              color={theme.colors.primary}
-            />
+            {isReportLoading ? (
+              <ActivityIndicator size="small" color={theme.colors.primary} />
+            ) : (
+              <Icon
+                name="share-social"
+                size={16}
+                color={theme.colors.primary}
+              />
+            )}
             <Text
               style={[styles.actionBtnText, { color: theme.colors.primary }]}
             >

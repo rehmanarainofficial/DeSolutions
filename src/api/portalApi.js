@@ -78,6 +78,21 @@ export const portalApi = baseApi.injectEndpoints({
         };
       },
     }),
+    getOutstandingReport: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', body.company);
+        formData.append('customer_id', body.customer_id);
+        return {
+          url: 'portal/outstanding_report.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
   }),
   overrideExisting: true,
 });
@@ -88,4 +103,5 @@ export const {
   usePostServicePurchSaleMutation,
   useGetOrderShippingInfoMutation,
   useGetOrderStatusListingMutation,
+  useGetOutstandingReportMutation,
 } = portalApi;

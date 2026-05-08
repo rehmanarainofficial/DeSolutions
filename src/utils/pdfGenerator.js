@@ -1,7 +1,41 @@
 import { generatePDF } from 'react-native-html-to-pdf';
-import { Share } from 'react-native';
+import RNShare from 'react-native-share';
 
-export const generateAndShareStatementPDF = async (customerName = 'Shifa International Hospital Distribution', paymentTerms = '0') => {
+export const generateAndShareStatementPDF = async (customerName = 'Statement', paymentTerms = '0', reportData = []) => {
+  
+  let current = 0;
+  let d1to60 = 0;
+  let d61to120 = 0;
+  let over120 = 0;
+  let totalBalance = 0;
+
+  const rowsHtml = reportData.length > 0 ? reportData.map(row => {
+    const bal = parseFloat(row.bal_amount || 0);
+    const days = parseInt(row.days || 0);
+    totalBalance += bal;
+    
+    if (days <= 0) current += bal;
+    else if (days <= 60) d1to60 += bal;
+    else if (days <= 120) d61to120 += bal;
+    else over120 += bal;
+
+    return `<tr>
+      <td>${row.tran_date || ''}</td>
+      <td>${row.due_date || ''}</td>
+      <td>${row.days || 0}</td>
+      <td>${row.reference || ''}</td>
+      <td>${row.branch_name || ''}</td>
+      <td>${row.cust_ref || '-'}</td>
+      <td class="right">${parseFloat(row.debit_amount || 0).toLocaleString()}</td>
+      <td class="right">${parseFloat(row.credit_amount || 0).toLocaleString()}</td>
+      <td class="right">${parseFloat(row.allocated_amount || 0).toLocaleString()}</td>
+      <td class="right">${parseFloat(row.bal_amount || 0).toLocaleString()}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="10" style="text-align: center;">No outstanding records found</td></tr>';
+
+  const today = new Date();
+  const dateStr = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth()+1).padStart(2, '0')}-${today.getFullYear()} ${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`;
+
   const htmlContent = `
     <html>
       <head>
@@ -31,7 +65,7 @@ export const generateAndShareStatementPDF = async (customerName = 'Shifa Interna
         <div style="font-size: 10px;">Payment Terms: ${paymentTerms} Days</div>
         <div class="meta-info">
           <div></div>
-          <div>Date: 07-05-2026 09:05 am</div>
+          <div>Date: ${dateStr}</div>
         </div>
         
         <table>
@@ -50,20 +84,16 @@ export const generateAndShareStatementPDF = async (customerName = 'Shifa Interna
             </tr>
           </thead>
           <tbody>
-            <tr><td>01-01-26</td><td>02-03-26</td><td>126</td><td>SI0180126</td><td>Shifa Intl</td><td>0000335465 30Dec25</td><td class="right">30,279</td><td class="right">0</td><td class="right">0</td><td class="right">30,279</td></tr>
-            <tr><td>01-01-26</td><td>02-03-26</td><td>126</td><td>SI0190126</td><td>Shifa Intl</td><td>0000335449 30Dec25</td><td class="right">55,049</td><td class="right">0</td><td class="right">0</td><td class="right">55,049</td></tr>
-            <tr><td>03-01-26</td><td>04-03-26</td><td>124</td><td>SI0250126</td><td>Shifa Intl</td><td>0000334514 23Dec25</td><td class="right">35,400</td><td class="right">0</td><td class="right">0</td><td class="right">35,400</td></tr>
-            <tr><td>09-01-26</td><td>10-03-26</td><td>118</td><td>SI0500126</td><td>Shifa Intl</td><td>0000335710 02Jan26</td><td class="right">118,000</td><td class="right">0</td><td class="right">0</td><td class="right">118,000</td></tr>
-            <tr><td>14-01-26</td><td>15-03-26</td><td>113</td><td>SI0840126</td><td>Shifa Intl</td><td>0000336588 09Dec26</td><td class="right">880,615</td><td class="right">0</td><td class="right">0</td><td class="right">880,615</td></tr>
+            ${rowsHtml}
           </tbody>
         </table>
 
         <div class="totals">
-          <div class="total-col">Current<br/>0</div>
-          <div class="total-col">1-60 Days<br/>4,977,363</div>
-          <div class="total-col">61-120 Days<br/>6,835,479</div>
-          <div class="total-col">Over 120 Days<br/>120,728</div>
-          <div class="total-col">Balance<br/>11,933,570</div>
+          <div class="total-col">Current<br/>${current.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+          <div class="total-col">1-60 Days<br/>${d1to60.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+          <div class="total-col">61-120 Days<br/>${d61to120.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+          <div class="total-col">Over 120 Days<br/>${over120.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+          <div class="total-col">Balance<br/>${totalBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
         </div>
       </body>
     </html>
@@ -72,15 +102,18 @@ export const generateAndShareStatementPDF = async (customerName = 'Shifa Interna
   try {
     const options = {
       html: htmlContent,
-      fileName: 'Ledger_Statement_' + customerName.replace(/\s+/g, '_'),
-      directory: 'Documents',
+      fileName: 'Ledger_Statement_' + customerName.replace(/[^a-zA-Z0-9]/g, '_'),
     };
     const file = await generatePDF(options);
     
-    await Share.share({
-      url: `file://${file.filePath}`,
+    const filePath = file.filePath.startsWith('file://') ? file.filePath : `file://${file.filePath}`;
+    const encodedPath = encodeURI(filePath);
+
+    await RNShare.open({
+      url: encodedPath,
       title: 'Share Statement',
       message: 'Please find the attached ledger statement.',
+      type: 'application/pdf',
     });
   } catch (e) {
     console.log('Error generating PDF', e);

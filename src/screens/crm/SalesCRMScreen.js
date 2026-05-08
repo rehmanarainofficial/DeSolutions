@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -22,7 +22,9 @@ const SalesCRMScreen = ({ navigation }) => {
         style={[
           styles.pillButton,
           isPrimary ? styles.pillButtonPrimary : styles.pillButtonSecondary,
-          { borderColor: isPrimary ? theme.colors.primary : theme.colors.border },
+          {
+            borderColor: isPrimary ? theme.colors.primary : theme.colors.border,
+          },
         ]}
         onPress={onPress}
       >
@@ -37,7 +39,9 @@ const SalesCRMScreen = ({ navigation }) => {
         <Text
           style={[
             styles.pillButtonText,
-            isPrimary ? styles.pillButtonTextPrimary : styles.pillButtonTextSecondary(theme),
+            isPrimary
+              ? styles.pillButtonTextPrimary
+              : styles.pillButtonTextSecondary(theme),
           ]}
         >
           {title}
@@ -48,7 +52,10 @@ const SalesCRMScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Top Row: Box Buttons (Copied from CRMScreen) */}
         <View style={styles.topRow}>
           <TouchableOpacity
@@ -93,25 +100,59 @@ const SalesCRMScreen = ({ navigation }) => {
         </View>
 
         {/* Card 1: Plan & Track */}
-        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
           <View style={styles.cardHeader}>
-            <View style={[styles.cardIconWrap, { backgroundColor: theme.colors.primary + '15' }]}>
+            <View
+              style={[
+                styles.cardIconWrap,
+                { backgroundColor: theme.colors.primary + '15' },
+              ]}
+            >
               <Icon name="ellipse" size={16} color={theme.colors.primary} />
             </View>
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Plan & Track</Text>
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+              Plan & Track
+            </Text>
           </View>
-          
+
           <View style={styles.pillContainer}>
-            {renderPillButton('Plan', 'clipboard-outline', activePlanTab === 'Plan', () => setActivePlanTab('Plan'))}
-            {renderPillButton('Progress', 'trending-up-outline', activePlanTab === 'Progress', () => setActivePlanTab('Progress'))}
-            {renderPillButton('Performance', 'speedometer-outline', activePlanTab === 'Performance', () => setActivePlanTab('Performance'))}
+            {renderPillButton(
+              'Plan',
+              'clipboard-outline',
+              activePlanTab === 'Plan',
+              () => setActivePlanTab('Plan'),
+            )}
+            {renderPillButton(
+              'Progress',
+              'trending-up-outline',
+              activePlanTab === 'Progress',
+              () => setActivePlanTab('Progress'),
+            )}
+            {renderPillButton(
+              'Performance',
+              'speedometer-outline',
+              activePlanTab === 'Performance',
+              () => setActivePlanTab('Performance'),
+            )}
           </View>
 
           {activePlanTab === 'Plan' && (
             <>
               <Text style={styles.sectionSubtitle}>PLAN BREAKDOWN</Text>
               <View style={styles.pillContainer}>
-                {renderPillButton('Daily working plan', 'settings-outline', false)}
+                {renderPillButton(
+                  'Daily working plan',
+                  'settings-outline',
+                  false,
+                )}
               </View>
             </>
           )}
@@ -120,7 +161,11 @@ const SalesCRMScreen = ({ navigation }) => {
             <>
               <Text style={styles.sectionSubtitle}>PROGRESS BREAKDOWN</Text>
               <View style={styles.pillContainer}>
-                {renderPillButton('Daily Working Plan Progress', 'bar-chart-outline', false)}
+                {renderPillButton(
+                  'Daily Working Plan Progress',
+                  'bar-chart-outline',
+                  false,
+                )}
               </View>
             </>
           )}
@@ -130,7 +175,11 @@ const SalesCRMScreen = ({ navigation }) => {
               <Text style={styles.sectionSubtitle}>PERFORMANCE METRICS</Text>
               <View style={styles.pillContainer}>
                 {renderPillButton('KPI Dashboard', 'pie-chart-outline', false)}
-                {renderPillButton('Sales Vs Target', 'stats-chart-outline', false)}
+                {renderPillButton(
+                  'Sales Vs Target',
+                  'stats-chart-outline',
+                  false,
+                )}
                 {renderPillButton('Product Sales', 'cube-outline', false)}
                 {renderPillButton('Customer Sales', 'people-outline', false)}
               </View>
@@ -139,43 +188,107 @@ const SalesCRMScreen = ({ navigation }) => {
         </View>
 
         {/* Card 2: Customer */}
-        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
           <View style={styles.cardHeader}>
-            <View style={[styles.cardIconWrap, { backgroundColor: theme.colors.primary + '15' }]}>
+            <View
+              style={[
+                styles.cardIconWrap,
+                { backgroundColor: theme.colors.primary + '15' },
+              ]}
+            >
               <Icon name="people" size={16} color={theme.colors.primary} />
             </View>
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Customer</Text>
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+              Customer
+            </Text>
           </View>
-          
+
           <View style={styles.pillContainer}>
-            {renderPillButton('Generate Order', 'document-text-outline', false, () => navigation.navigate('SalesGenerateOrder'))}
-            {renderPillButton('View Order Status', 'document-text-outline', false, () => navigation.navigate('SalesTrackOrderStatus'))}
-            {renderPillButton('View Shipping Info', 'document-text-outline', false)}
-            {renderPillButton('View Customer Balances', 'document-text-outline', false)}
+            {renderPillButton(
+              'Generate Order',
+              'document-text-outline',
+              false,
+              () => navigation.navigate('SalesGenerateOrder'),
+            )}
+            {renderPillButton(
+              'View Order Status',
+              'document-text-outline',
+              false,
+              () => navigation.navigate('SalesTrackOrderStatus'),
+            )}
+            {renderPillButton(
+              'View Shipping Info',
+              'document-text-outline',
+              false,
+            )}
+            {renderPillButton(
+              'View Customer Balances',
+              'document-text-outline',
+              false,
+            )}
           </View>
         </View>
 
         {/* Card 3: Raise Request */}
-        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
           <View style={styles.cardHeader}>
-            <View style={[styles.cardIconWrap, { backgroundColor: theme.colors.primary + '15' }]}>
+            <View
+              style={[
+                styles.cardIconWrap,
+                { backgroundColor: theme.colors.primary + '15' },
+              ]}
+            >
               <Icon name="megaphone" size={16} color={theme.colors.primary} />
             </View>
-            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>Raise Request</Text>
+            <Text style={[styles.cardTitle, { color: theme.colors.text }]}>
+              Raise Request
+            </Text>
           </View>
-          
+
           <View style={styles.pillContainer}>
-            {renderPillButton('Promotional', 'diamond-outline', activeRaiseTab === 'Promotional', () => setActiveRaiseTab('Promotional'))}
-            {renderPillButton('Expense', 'cash-outline', activeRaiseTab === 'Expense', () => setActiveRaiseTab('Expense'))}
+            {renderPillButton(
+              'Promotional',
+              'diamond-outline',
+              activeRaiseTab === 'Promotional',
+              () => setActiveRaiseTab('Promotional'),
+            )}
+            {renderPillButton(
+              'Expense',
+              'cash-outline',
+              activeRaiseTab === 'Expense',
+              () => setActiveRaiseTab('Expense'),
+            )}
           </View>
 
           {activeRaiseTab === 'Promotional' && (
             <>
               <Text style={styles.sectionSubtitle}>PROMOTIONAL CAMPAIGNS</Text>
               <View style={styles.pillContainer}>
-                {renderPillButton('Samples', 'flask-outline', false, () => navigation.navigate('CRMSampleRequest'))}
-                {renderPillButton('Giveaway', 'gift-outline', false, () => navigation.navigate('CRMGiveawayRequest'))}
-                {renderPillButton('Workshop', 'easel-outline', false, () => navigation.navigate('CRMWorkshopRequest'))}
+                {renderPillButton('Samples', 'flask-outline', false, () =>
+                  navigation.navigate('CRMSampleRequest'),
+                )}
+                {renderPillButton('Giveaway', 'gift-outline', false, () =>
+                  navigation.navigate('CRMGiveawayRequest'),
+                )}
+                {renderPillButton('Workshop', 'easel-outline', false, () =>
+                  navigation.navigate('CRMWorkshopRequest'),
+                )}
                 {renderPillButton('Conference', 'mic-outline', false)}
               </View>
             </>
@@ -185,13 +298,21 @@ const SalesCRMScreen = ({ navigation }) => {
             <>
               <Text style={styles.sectionSubtitle}>EXPENSE REQUESTS</Text>
               <View style={styles.pillContainer}>
-                {renderPillButton('Monthly Expense', 'calendar-outline', false, () => navigation.navigate('CRMMonthlyExpense'))}
-                {renderPillButton('Additional Expense Request', 'add-circle-outline', false)}
+                {renderPillButton(
+                  'Monthly Expense',
+                  'calendar-outline',
+                  false,
+                  () => navigation.navigate('CRMMonthlyExpense'),
+                )}
+                {renderPillButton(
+                  'Additional Expense Request',
+                  'add-circle-outline',
+                  false,
+                )}
               </View>
             </>
           )}
         </View>
-
       </ScrollView>
     </View>
   );
@@ -285,7 +406,7 @@ const getStyles = theme =>
     pillButtonTextPrimary: {
       color: '#FFFFFF',
     },
-    pillButtonTextSecondary: (theme) => ({
+    pillButtonTextSecondary: theme => ({
       color: theme.colors.primary,
     }),
     sectionSubtitle: {

@@ -37,7 +37,9 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
   const [poDate, setPoDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [shippingAddress, setShippingAddress] = useState(
-    route.params?.customer?.shipping_address || route.params?.customer?.address || ''
+    route.params?.customer?.shipping_address ||
+      route.params?.customer?.address ||
+      '',
   );
   const [picture, setPicture] = useState(null);
   const [orderLoader, setOrderLoader] = useState(false);
@@ -141,6 +143,13 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
     setPrice('0');
 
     Toast.show({ type: 'success', text1: 'Item added to cart' });
+  };
+
+  const deleteCartItem = index => {
+    const updatedCart = [...cart];
+    updatedCart.splice(index, 1);
+    setCart(updatedCart);
+    Toast.show({ type: 'success', text1: 'Item removed from cart' });
   };
 
   const confirmOrder = async () => {
@@ -399,15 +408,31 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
                   style={{
                     flexDirection: 'row',
                     justifyContent: 'space-between',
+                    alignItems: 'center',
                     marginBottom: 5,
                   }}
                 >
                   <Text style={{ color: theme.colors.textSecondary, flex: 1 }}>
                     {item.description} (x{item.quantity_ordered})
                   </Text>
-                  <Text style={{ color: theme.colors.text, fontWeight: '600' }}>
-                    Rs {item.GrandTotal}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text
+                      style={{
+                        color: theme.colors.text,
+                        fontWeight: '600',
+                        marginRight: 10,
+                      }}
+                    >
+                      {item.GrandTotal}
+                    </Text>
+                    <TouchableOpacity onPress={() => deleteCartItem(idx)}>
+                      <Ionicons
+                        name="trash-outline"
+                        size={18}
+                        color={theme.colors.error}
+                      />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               ))}
               <View
