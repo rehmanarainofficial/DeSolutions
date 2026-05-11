@@ -97,7 +97,7 @@ const SaleTaskScreen = ({ navigation }) => {
 
   useEffect(() => {
     getSalesCategory({});
-    getHospital({});
+    getHospital({ id: user?.id });
     fetchDailyPlan();
   }, []);
 
@@ -116,7 +116,7 @@ const SaleTaskScreen = ({ navigation }) => {
   const handleHospitalSelect = item => {
     setSelectedHospital(item.debtor_no);
     setSelectedContact(null);
-    getHospitalContacts({ hospital_id: item.debtor_no });
+    getHospitalContacts({ hospital_id: item.debtor_no, user_id: user?.id });
   };
 
   const handleAddTask = async () => {
@@ -135,9 +135,6 @@ const SaleTaskScreen = ({ navigation }) => {
     }
 
     try {
-      const selectedActivityObj = actRes?.data?.find(
-        a => a.id === selectedActivity,
-      );
       const response = await addDailyWorkingPlan({
         id: '0',
         user_id: user?.id,
@@ -245,9 +242,9 @@ const SaleTaskScreen = ({ navigation }) => {
           lat = coords?.latitude || '';
           lon = coords?.longitude || '';
           if (lat && lon) {
-             addressName = await getAddressFromCoords(lat, lon);
+            addressName = await getAddressFromCoords(lat, lon);
           } else {
-             throw new Error('Empty coordinates');
+            throw new Error('Empty coordinates');
           }
         } catch (locError) {
           console.log('Location fetch failed:', locError);
@@ -260,15 +257,17 @@ const SaleTaskScreen = ({ navigation }) => {
                 text: 'Turn On',
                 onPress: () => {
                   if (Platform.OS === 'android') {
-                    Linking.sendIntent('android.settings.LOCATION_SOURCE_SETTINGS');
+                    Linking.sendIntent(
+                      'android.settings.LOCATION_SOURCE_SETTINGS',
+                    );
                   } else {
                     Linking.openSettings();
                   }
                 },
               },
-            ]
+            ],
           );
-          return; // Block update until location is available
+          return;
         }
       } else {
         console.log('Location permission denied, proceeding without location');
@@ -277,10 +276,10 @@ const SaleTaskScreen = ({ navigation }) => {
           'Please enable location permissions in your settings to update tasks.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => Linking.openSettings() }
-          ]
+            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          ],
         );
-        return; // Block update if permission is denied
+        return;
       }
 
       const now = new Date();

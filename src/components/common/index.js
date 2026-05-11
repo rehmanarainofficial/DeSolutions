@@ -11,3 +11,4 @@ export { default as GLAccountDropdown } from './GLAccountDropdown';
 export { default as CounterPartyDropdown } from './CounterPartyDropdown';
 export { default as CustomDatePicker } from './CustomDatePicker';
 export { default as SearchableDropdown } from './SearchableDropdown';
+export { default as CustomAlertModal } from './CustomAlertModal';

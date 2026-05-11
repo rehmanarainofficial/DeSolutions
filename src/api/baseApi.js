@@ -89,9 +89,10 @@ export const baseApi = createApi({
       },
     }),
     getHospital: builder.mutation({
-      query: () => {
+      query: body => {
         const formData = new FormData();
         formData.append('company', 'CRM');
+        formData.append('user_id', body.id);
 
         return {
           url: 'dropdown/hospital.php',
@@ -120,6 +121,7 @@ export const baseApi = createApi({
         const formData = new FormData();
         formData.append('company', 'CRM');
         formData.append('hospital_id', body.hospital_id);
+        formData.append('user_id', body.user_id);
 
         return {
           url: 'dropdown/hospital_contacts.php',
@@ -169,17 +171,6 @@ export const baseApi = createApi({
         if (body.emp_code) {
           formData.append('code', body.emp_code);
         }
-
-        // --- DEBUG LOG FOR PAYLOAD ---
-        const payloadLog = {};
-        formData.getParts().forEach(part => {
-          payloadLog[part.fieldName] = part.string;
-        });
-        console.log(
-          '=== PAYLOAD FOR daily_working_plan.php ===\n',
-          JSON.stringify(payloadLog, null, 2),
-        );
-        // -----------------------------
 
         return {
           url: 'portal/daily_working_plan.php',

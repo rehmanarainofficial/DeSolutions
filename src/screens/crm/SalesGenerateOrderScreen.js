@@ -12,20 +12,20 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@config/useTheme';
-import { generateAndShareStatementPDF } from '../../utils/pdfGenerator';
+import { generateAndShareStatementPDF } from '../../utils/PDFExportService';
 import {
   useGetDebtorsMasterQuery,
   useGetOutstandingReportMutation,
 } from '@api/portalApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@store/slices/authSlice';
+import { CustomAlertModal } from '@components/common';
 
 const CustomerCard = ({ item, theme }) => {
-  console.log(item);
-
   const styles = getCardStyles(theme);
   const navigation = useNavigation();
   const user = useSelector(selectCurrentUser);
+  const [modalConfig, setModalConfig] = React.useState({ visible: false, title: '', message: '' });
 
   const cleanName = item.name ? item.name.replace(/&amp;/g, '&') : '';
   const displayName = item.city ? `${cleanName} , ${item.city}` : cleanName;
@@ -45,21 +45,23 @@ const CustomerCard = ({ item, theme }) => {
           cleanName,
           item.payment_terms || 0,
           res.data || [],
+          user?.company_name,
         );
       } else {
         await generateAndShareStatementPDF(
           cleanName,
           item.payment_terms || 0,
           [],
+          user?.company_name,
         );
       }
     } catch (e) {
-      console.log('Error fetching outstanding report:', e);
-      await generateAndShareStatementPDF(
-        cleanName,
-        item.payment_terms || 0,
-        [],
-      );
+      console.log('Error in handleSharePDF:', e);
+      setModalConfig({
+        visible: true,
+        title: 'Share Cancelled',
+        message: e.message || 'User did not share.',
+      });
     }
   };
 
@@ -241,6 +243,13 @@ const CustomerCard = ({ item, theme }) => {
           </TouchableOpacity>
         </View>
       </View>
+
+      <CustomAlertModal
+        visible={modalConfig.visible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onClose={() => setModalConfig({ ...modalConfig, visible: false })}
+      />
 
       {/* Footer */}
       <View style={styles.footer}>

@@ -1,23 +1,20 @@
-import { generatePDF } from 'react-native-html-to-pdf';
-import RNShare from 'react-native-share';
-
-export const generateAndShareStatementPDF = async (customerName = 'Statement', paymentTerms = '0', reportData = []) => {
+export const generateAndShareStatementPDF = async (customerName = 'Statement', paymentTerms = '0', reportData = [], companyName = 'ANWAR & SONS') => {
+  let generatePDF, RNShare;
+  try {
+    generatePDF = require('react-native-html-to-pdf').generatePDF;
+    RNShare = require('react-native-share').default;
+  } catch (err) {
+    throw new Error('Native PDF modules are not linked correctly on iOS. Please run pod install.');
+  }
   
-  let current = 0;
-  let d1to60 = 0;
-  let d61to120 = 0;
-  let over120 = 0;
   let totalBalance = 0;
+  let totalDueAmount = 0;
 
   const rowsHtml = reportData.length > 0 ? reportData.map(row => {
     const bal = parseFloat(row.bal_amount || 0);
-    const days = parseInt(row.days || 0);
+    const dueAmt = parseFloat(row.due_amount || 0);
     totalBalance += bal;
-    
-    if (days <= 0) current += bal;
-    else if (days <= 60) d1to60 += bal;
-    else if (days <= 120) d61to120 += bal;
-    else over120 += bal;
+    totalDueAmount += dueAmt;
 
     return `<tr>
       <td>${row.tran_date || ''}</td>
@@ -56,20 +53,26 @@ export const generateAndShareStatementPDF = async (customerName = 'Statement', p
         </style>
       </head>
       <body>
-        <div class="header-row">
-          <div class="logo">ANWAR & SONS</div>
-          <div class="statement-text">STATEMENT</div>
-        </div>
-        <div class="charge-to">Charge To</div>
-        <div class="customer-name">${customerName}</div>
-        <div style="font-size: 10px;">Payment Terms: ${paymentTerms} Days</div>
-        <div class="meta-info">
-          <div></div>
-          <div>Date: ${dateStr}</div>
-        </div>
-        
         <table>
           <thead>
+            <tr>
+              <td colspan="10" style="border: none; padding: 0; padding-bottom: 15px;">
+                <div class="header-row">
+                  <div class="logo">${companyName}</div>
+                  <div class="statement-text">STATEMENT</div>
+                </div>
+                <div class="charge-to">Charge To</div>
+                <div class="customer-name">${customerName}</div>
+                <div style="font-size: 10px;">Payment Terms: ${paymentTerms} Days</div>
+                <div class="meta-info">
+                  <div></div>
+                  <div style="text-align: right;">
+                    <div style="font-weight: bold; margin-bottom: 4px; font-size: 11px;">Due Amount: ${totalDueAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                    <div>Date: ${dateStr}</div>
+                  </div>
+                </div>
+              </td>
+            </tr>
             <tr>
               <th>Date</th>
               <th>DueDate</th>
@@ -88,11 +91,7 @@ export const generateAndShareStatementPDF = async (customerName = 'Statement', p
           </tbody>
         </table>
 
-        <div class="totals">
-          <div class="total-col">Current<br/>${current.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-          <div class="total-col">1-60 Days<br/>${d1to60.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-          <div class="total-col">61-120 Days<br/>${d61to120.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-          <div class="total-col">Over 120 Days<br/>${over120.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+        <div class="totals" style="justify-content: flex-end;">
           <div class="total-col">Balance<br/>${totalBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
         </div>
       </body>
@@ -117,5 +116,6 @@ export const generateAndShareStatementPDF = async (customerName = 'Statement', p
     });
   } catch (e) {
     console.log('Error generating PDF', e);
+    throw e;
   }
 };

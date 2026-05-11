@@ -13,7 +13,8 @@ import Orientation from 'react-native-orientation-locker';
 import { useTheme } from '@config/useTheme';
 import { DateFilter, LoadingSpinner, PersonDropdown, GLAccountDropdown, CounterPartyDropdown, DimensionDropdown } from '@components/common';
 import { useGetGLAccountInquiryMutation } from '@api/ledgerApi';
-import { generateAndShareStatementPDF } from '../../utils/pdfGenerator';
+import { generateAndShareStatementPDF } from '../../utils/PDFExportService';
+import { CustomAlertModal } from '../common';
 
 const LedgerScreen = ({ route, navigation }) => {
   const { account: initialAccount, title, fromDate: pFromDate, toDate: pToDate, personId: initialPersonId, type, company: pCompany } = route.params || {};
@@ -28,6 +29,7 @@ const LedgerScreen = ({ route, navigation }) => {
   const [selectedPersonObj, setSelectedPersonObj] = useState(null);
   const [dimensionId, setDimensionId] = useState(0);
   const [hasCounterParties, setHasCounterParties] = useState(false);
+  const [modalConfig, setModalConfig] = useState({ visible: false, title: '', message: '' });
 
   const [getGLAccountInquiry, { isLoading }] = useGetGLAccountInquiryMutation();
   const [fromDate, setFromDate] = useState(
@@ -130,6 +132,19 @@ const LedgerScreen = ({ route, navigation }) => {
 
   const s = getStyles(theme);
 
+  const handleSharePDF = async () => {
+    try {
+      await generateAndShareStatementPDF();
+    } catch (e) {
+      console.log('Error sharing PDF:', e);
+      setModalConfig({
+        visible: true,
+        title: 'Share Cancelled',
+        message: e.message || 'User did not share.',
+      });
+    }
+  };
+
   const renderHeader = () => (
     <View style={s.summaryContainer}>
       <View style={[s.summaryCard, { flex: 0.42, backgroundColor: theme.colors.surface }]}>
@@ -150,7 +165,7 @@ const LedgerScreen = ({ route, navigation }) => {
       </View>
       <TouchableOpacity 
         style={[s.summaryCard, { flex: 0.12, backgroundColor: theme.colors.primary, justifyContent: 'center' }]}
-        onPress={() => generateAndShareStatementPDF()}
+        onPress={handleSharePDF}
       >
         <Icon name="share-social" size={20} color="#fff" />
       </TouchableOpacity>
@@ -392,6 +407,13 @@ const LedgerScreen = ({ route, navigation }) => {
           )}
         />
       )}
+
+      <CustomAlertModal
+        visible={modalConfig.visible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onClose={() => setModalConfig({ ...modalConfig, visible: false })}
+      />
     </SafeAreaView>
   );
 };

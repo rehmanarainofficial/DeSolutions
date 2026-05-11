@@ -93,6 +93,22 @@ export const portalApi = baseApi.injectEndpoints({
         };
       },
     }),
+    getViewData: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', body.company);
+        formData.append('trans_no', body.trans_no);
+        formData.append('type', body.type);
+        return {
+          url: 'view/view_data.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
   }),
   overrideExisting: true,
 });
@@ -104,4 +120,5 @@ export const {
   useGetOrderShippingInfoMutation,
   useGetOrderStatusListingMutation,
   useGetOutstandingReportMutation,
+  useGetViewDataMutation,
 } = portalApi;

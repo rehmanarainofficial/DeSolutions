@@ -7,13 +7,19 @@ import {
   TextInput,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@config/useTheme';
 import { useSelector } from 'react-redux';
-import { useGetOrderShippingInfoMutation } from '@api/portalApi';
+import {
+  useGetOrderShippingInfoMutation,
+  useGetViewDataMutation,
+} from '@api/portalApi';
 import { selectCurrentUser } from '@store/slices/authSlice';
+import { generateAndShareOrderChallanPDF } from '../../utils/PDFOrderChallanService';
+import { CustomAlertModal } from '@components/common';
 
 const SupplyInfoScreen = ({ navigation }) => {
   const { theme } = useTheme();
@@ -21,12 +27,42 @@ const SupplyInfoScreen = ({ navigation }) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [shipments, setShipments] = useState([]);
+  const [modalConfig, setModalConfig] = useState({ visible: false, title: '', message: '' });
 
   const { company } = useSelector(state => state.auth);
   const user = useSelector(selectCurrentUser);
 
   const [getOrderShippingInfo, { isLoading }] =
     useGetOrderShippingInfoMutation();
+  const [getViewData, { isLoading: isViewLoading }] = useGetViewDataMutation();
+
+  const handleViewDetail = async item => {
+    try {
+      const res = await getViewData({
+        company: user?.company_user_code || company,
+        trans_no: item.trans_no || item.order_no || item.id || '',
+        type: item.type || '13', // Type 13 for Sales Delivery/Supply
+      }).unwrap();
+
+      if (res && String(res.status_header) === 'true') {
+        const headerData = res.data_header?.[0] || {};
+        const detailData = res.data_detail || [];
+        await generateAndShareOrderChallanPDF(
+          'Sales Order',
+          headerData,
+          detailData,
+          user?.company_name || 'ANWAR & SONS'
+        );
+      }
+    } catch (e) {
+      console.log('Error fetching view data', e);
+      setModalConfig({
+        visible: true,
+        title: 'Share Cancelled',
+        message: e.message || 'User did not share.',
+      });
+    }
+  };
 
   const fetchShipments = async () => {
     try {
@@ -209,11 +245,28 @@ const SupplyInfoScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* View Details Button */}
-        <TouchableOpacity style={styles.detailBtn}>
-          <Text style={styles.detailBtnText}>View Details</Text>
-          <Icon name="arrow-forward-outline" size={16} color={theme.colors.primary} />
-        </TouchableOpacity>
+        {/* Action Buttons */}
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <TouchableOpacity 
+            style={[styles.detailBtn, { flex: 1, backgroundColor: theme.colors.success + '1A' }]}
+            onPress={() => navigation.navigate('SalesPayment', { customer: { name: item.customer } })}
+          >
+            <Text style={[styles.detailBtnText, { color: theme.colors.success }]}>Payment</Text>
+            <Icon name="cash-outline" size={16} color={theme.colors.success} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.detailBtn, { flex: 1 }]}
+            onPress={() => handleViewDetail(item)}
+            disabled={isViewLoading}
+          >
+            {isViewLoading ? (
+              <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginRight: 6 }} />
+            ) : null}
+            <Text style={styles.detailBtnText}>View Details</Text>
+            <Icon name="arrow-forward-outline" size={16} color={theme.colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -248,27 +301,40 @@ const SupplyInfoScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <FlatList
-        data={filteredShipments}
-        keyExtractor={(item, index) => item.order_no || index.toString()}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isLoading}
-            onRefresh={fetchShipments}
-            colors={[theme.colors.primary]}
-          />
-        }
-        ListEmptyComponent={
-          !isLoading && (
-            <View style={styles.emptyState}>
-              <Icon name="bus-outline" size={48} color={theme.colors.border} />
-              <Text style={styles.emptyStateText}>No shipments found.</Text>
-            </View>
-          )
-        }
+      {isLoading && shipments.length === 0 ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={filteredShipments}
+          keyExtractor={(item, index) => item.order_no || index.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={fetchShipments}
+              colors={[theme.colors.primary]}
+            />
+          }
+          ListEmptyComponent={
+            !isLoading && (
+              <View style={styles.emptyState}>
+                <Icon name="bus-outline" size={48} color={theme.colors.border} />
+                <Text style={styles.emptyStateText}>No shipments found.</Text>
+              </View>
+            )
+          }
+        />
+      )}
+
+      <CustomAlertModal
+        visible={modalConfig.visible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onClose={() => setModalConfig({ ...modalConfig, visible: false })}
       />
     </SafeAreaView>
   );

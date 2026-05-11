@@ -1,3 +1,5 @@
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -8,55 +10,50 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@config/useTheme';
+import { useGetDailyWorkingPlanMutation } from '@api/baseApi';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@store/slices/authSlice';
 
 const quickActions = [
   {
     id: 'contact',
     title: 'CRM\nCONTACT',
     icon: 'people-outline',
-    color: '#3b82f6',
   },
   {
     id: 'hospital',
     title: 'HOSPITAL',
     icon: 'business-outline',
-    color: '#ef4444',
   },
   {
     id: 'new_order',
     title: 'NEW ORDER',
     icon: 'clipboard-outline',
-    color: '#16a34a',
   },
   {
     id: 'order_status',
     title: 'ORDER STATUS',
     icon: 'document-text-outline',
-    color: '#f59e0b',
   },
   {
     id: 'customer_balance',
     title: 'CUSTOMER BALANCE',
     icon: 'pie-chart-outline',
-    color: '#9333ea',
   },
   {
     id: 'supply_info',
     title: 'SUPPLY INFO',
     icon: 'bus-outline',
-    color: '#2563eb',
   },
   {
     id: 'payment',
     title: 'PAYMENT ENTRY',
     icon: 'cash-outline',
-    color: '#16a34a',
   },
   {
     id: 'sample',
     title: 'SAMPLE REQUEST',
     icon: 'flask-outline',
-    color: '#a855f7',
   },
 ];
 
@@ -65,31 +62,55 @@ const reports = [
     id: 'sales_target',
     title: 'SALES VS\nTARGET',
     icon: 'bar-chart-outline',
-    color: '#3b82f6',
   },
   {
     id: 'cust_balance',
     title: 'CUSTOMER\nBALANCE',
     icon: 'pie-chart-outline',
-    color: '#16a34a',
   },
   {
     id: 'collection',
     title: 'COLLECTION\nREPORT',
     icon: 'wallet-outline',
-    color: '#f59e0b',
   },
   {
     id: 'daily_summary',
     title: 'DAILY\nSUMMARY',
     icon: 'calendar-outline',
-    color: '#8b5cf6',
   },
 ];
 
 const SaleManagementScreen = ({ navigation }) => {
   const { theme } = useTheme();
   const styles = getStyles(theme);
+
+  const user = useSelector(selectCurrentUser);
+  const [dailyPlans, setDailyPlans] = useState([]);
+  const [getDailyWorkingPlan] = useGetDailyWorkingPlanMutation();
+
+  const fetchDailyPlan = async () => {
+    try {
+      const d = new Date();
+      const dateStr = d.toISOString().split('T')[0];
+      const response = await getDailyWorkingPlan({
+        user_id: user?.id,
+        date: dateStr,
+      }).unwrap();
+      if (response && String(response.status) === 'true') {
+        setDailyPlans(response.data || []);
+      } else {
+        setDailyPlans([]);
+      }
+    } catch (error) {
+      console.log('Fetch Plan Error:', error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchDailyPlan();
+    }, [])
+  );
 
   const handleActionPress = item => {
     if (item.id === 'new_order') {
@@ -146,7 +167,7 @@ const SaleManagementScreen = ({ navigation }) => {
             </View>
             <View style={styles.planTextCol}>
               <Text style={styles.planCount}>
-                5 <Text style={styles.planSub}>Tasks</Text>
+                {dailyPlans?.length} <Text style={styles.planSub}>Tasks</Text>
               </Text>
               <Text style={styles.planSub}>Today</Text>
             </View>

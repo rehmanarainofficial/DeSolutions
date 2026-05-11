@@ -1,0 +1,253 @@
+export const generateAndShareOrderChallanPDF = async (
+  pdfType = 'Sales Order',
+  headerData = {},
+  detailData = [],
+  defaultCompanyName = 'ANWAR & SONS',
+) => {
+  let generatePDF, RNShare;
+  try {
+    generatePDF = require('react-native-html-to-pdf').generatePDF;
+    RNShare = require('react-native-share').default;
+  } catch (err) {
+    throw new Error(
+      'Native PDF modules are not linked correctly on iOS. Please run pod install.',
+    );
+  }
+
+  const isChallan = pdfType === 'Delivery Challan';
+
+  const dateStr = headerData.trans_date || '';
+  const refNo = headerData.reference || '';
+  const customerName = headerData.name || null;
+  const paymentTerms = headerData.payment_terms || null;
+
+  const companyName = headerData?.company_name || defaultCompanyName;
+  const companyAddress = headerData?.company_address || null;
+  const phone = headerData?.company_phone || null;
+  const email = headerData?.company_email || null;
+
+  const bankName = headerData?.company_bank_name || null;
+  const bankTitle = headerData?.company_bank_title || null;
+  const bankAccount = headerData?.company_bank_account_no || null;
+
+  let htmlContent = '';
+
+  if (isChallan) {
+    // Delivery Challan layout
+    const rowsHtml =
+      detailData.length > 0
+        ? detailData
+            .map((row, index) => {
+              return `<tr>
+        <td>${index + 1}</td>
+        <td>${row.stock_id || ''}</td>
+        <td>${row.description || ''}</td>
+        <td>${row.manufacturer || 'SMI, Belgium'}</td>
+        <td>Lot:${row.lot_no || row.lot_number || ''} Mfg:${
+                row.manufact_date || ''
+              } Exp:${row.exp_date || ''}</td>
+        <td>${row.um || 'Dozen'}</td>
+        <td>${parseFloat(row.qty_done || row.quantity || 0).toLocaleString(
+          undefined,
+          { minimumFractionDigits: 2 },
+        )}</td>
+      </tr>`;
+            })
+            .join('')
+        : '<tr><td colspan="7" style="text-align: center;">No items found</td></tr>';
+
+    htmlContent = `
+    <html>
+      <head>
+        <style>
+          body { font-family: 'Helvetica', sans-serif; padding: 20px; font-size: 11px; }
+          .header-title { text-align: center; font-size: 20px; font-weight: bold; }
+          .gst-info { text-align: center; font-size: 10px; margin-bottom: 20px; }
+          .flex-between { display: flex; justify-content: space-between; }
+          .bold { font-weight: bold; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 10px; }
+          th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+          th { background-color: #e5e7eb; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <thead style="display: table-header-group;">
+            <tr>
+              <td colspan="7" style="border: none; padding: 0;">
+                <div class="header-title">DELIVERY CHALLAN</div>
+                <div class="gst-info">
+                  <div>GST: 07-01-9018-008-64</div>
+                  <div>NTN: 0892299</div>
+                </div>
+                <div class="flex-between">
+                  <div style="width: 50%;">
+                    <div class="bold" style="font-size: 14px;">CUSTOMER</div>
+                    <div>${customerName}</div>
+                    <div>15B, Street SS2, RCCI Industrial Estate Rawat Pakistan</div>
+                    <div>NTN:C344604 STRN:</div>
+                    <br/>
+                    <div>${customerName}</div>
+                  </div>
+                  <div style="width: 40%;">
+                    <div class="flex-between bold"><div>DC No</div><div>${refNo}</div></div>
+                    <div class="flex-between bold"><div>DC Date</div><div>${dateStr}</div></div>
+                    <hr style="margin: 2px 0;"/>
+                    <div class="flex-between"><div>Customer PO#:</div><div></div></div>
+                    <div class="flex-between"><div>PO Date</div><div>${dateStr}</div></div>
+                    <hr style="margin: 2px 0;"/>
+                    <div class="flex-between"><div>Shipping via:</div><div>TCS (Detain)</div></div>
+                    <hr style="margin: 2px 0;"/>
+                    <div class="flex-between"><div>Ship To:</div><div>${customerName}</div></div>
+                    <div style="text-align: right;">15B, Street SS2, RCCI Industrial Estate Rawat Pakistan</div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <th>Sr.No</th>
+              <th>Item Code</th>
+              <th>Description</th>
+              <th>Manufacturer</th>
+              <th>Lot Number</th>
+              <th>U/M</th>
+              <th>Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </body>
+    </html>
+    `;
+  } else {
+    // Sales Order layout
+    let totalAmt = 0;
+    const rowsHtml =
+      detailData.length > 0
+        ? detailData
+            .map(row => {
+              const price = parseFloat(row.unit_price || 0);
+              const qty = parseFloat(row.quantity || row.qty_done || 0);
+              const rowTotal = price * qty;
+              totalAmt += rowTotal;
+              return `<tr>
+        <td>${row.stock_id || ''}</td>
+        <td>${row.description || ''}</td>
+        <td>${row.lot_no || row.lot || ''}</td>
+        <td>${row.exp_date || ''}</td>
+        <td style="text-align: right;">${qty.toLocaleString()}</td>
+        <td>${row.um || 'Dozen'}</td>
+        <td style="text-align: right;">${price.toLocaleString(undefined, {
+          minimumFractionDigits: 0,
+        })}</td>
+        <td style="text-align: right;">${rowTotal.toLocaleString(undefined, {
+          minimumFractionDigits: 0,
+        })}</td>
+      </tr>`;
+            })
+            .join('')
+        : '<tr><td colspan="8" style="text-align: center;">No items found</td></tr>';
+
+    htmlContent = `
+    <html>
+      <head>
+        <style>
+          body { font-family: 'Helvetica', sans-serif; padding: 20px; font-size: 11px; }
+          .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+          .logo { font-size: 28px; font-weight: bold; }
+          .doc-type { font-size: 28px; color: #a0aec0; font-weight: bold; }
+          .flex-between { display: flex; justify-content: space-between; }
+          .bold { font-weight: bold; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 10px; }
+          th, td { border: 1px solid #a0aec0; padding: 6px; text-align: left; }
+          th { background-color: #f3f4f6; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <thead style="display: table-header-group;">
+            <tr>
+              <td colspan="8" style="border: none; padding: 0;">
+                <div class="header-row">
+                  <div>
+                    <div class="logo">O ${companyName}</div>
+                    <div style="margin-top: 10px; width: 300px; white-space: pre-wrap;">${companyAddress}</div>
+                    <div style="display: flex; margin-top: 5px;"><div style="width: 50px; font-style: italic;">Phone</div><div>${phone}</div></div>
+                    <div style="display: flex;"><div style="width: 50px; font-style: italic;">Email</div><div style="color: blue;">${email}</div></div>
+                  </div>
+                  <div>
+                    <div class="doc-type">SALES ORDER</div>
+                    <div style="margin-top: 40px;">
+                      <div class="flex-between" style="width: 200px;"><span>Date</span><span>${dateStr}</span></div>
+                      <div class="flex-between" style="width: 200px;"><span>Order No.</span><span>${refNo}</span></div>
+                      <div class="flex-between" style="width: 200px;"><span>Page #</span><span>1</span></div>
+                    </div>
+                  </div>
+                </div>
+                
+                <hr style="border: 1px solid #cbd5e1; margin: 20px 0;" />
+                
+                <div class="flex-between">
+                  <div style="width: 45%;">
+                    <div class="bold">Charge To</div>
+                    <div style="margin-top: 5px;">${customerName}</div>
+                    <div>7A Khayaban-e-Firdousi, Block R3 Block R 3 M.A Johar Town, Lahore, Punjab</div>
+                    <div style="margin-top: 15px;">${customerName}</div>
+                    <div style="font-style: italic; margin-top: 15px;">Payment Terms: ${paymentTerms}</div>
+                  </div>
+                  <div style="width: 50%;">
+                    <div class="bold">${companyName} BANKING DETAILS</div>
+                    <div style="margin-top: 5px;">${bankName}</div>
+                    <div>Account Title: ${bankTitle}</div>
+                    <div>Account # ${bankAccount}</div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <th>Item Code</th>
+              <th>Item Description</th>
+              <th>LOT</th>
+              <th>Exp.Date</th>
+              <th style="text-align: right;">Quantity</th>
+              <th>U/M</th>
+              <th style="text-align: right;">Price</th>
+              <th style="text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </body>
+    </html>
+    `;
+  }
+
+  try {
+    const options = {
+      html: htmlContent,
+      fileName: `${pdfType.replace(/ /g, '_')}_${refNo.replace(
+        /[^a-zA-Z0-9]/g,
+        '_',
+      )}`,
+    };
+    const file = await generatePDF(options);
+
+    const filePath = file.filePath.startsWith('file://')
+      ? file.filePath
+      : `file://${file.filePath}`;
+    const encodedPath = encodeURI(filePath);
+
+    await RNShare.open({
+      url: encodedPath,
+      title: `Share ${pdfType}`,
+      type: 'application/pdf',
+    });
+  } catch (e) {
+    console.log('Error generating PDF', e);
+    throw e;
+  }
+};

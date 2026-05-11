@@ -10,26 +10,64 @@ import {
   RefreshControl,
   FlatList,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@config/useTheme';
 import { useSelector } from 'react-redux';
-import { useGetOrderStatusListingMutation } from '@api/portalApi';
+import {
+  useGetOrderStatusListingMutation,
+  useGetViewDataMutation,
+} from '@api/portalApi';
 import { selectCurrentUser } from '@store/slices/authSlice';
+import { generateAndShareOrderChallanPDF } from '../../utils/PDFOrderChallanService';
+import { CustomAlertModal } from '@components/common';
 
 const SalesOrderStatusScreen = () => {
   const { theme } = useTheme();
   const styles = getStyles(theme);
+  const navigation = useNavigation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [orders, setOrders] = useState([]);
+  const [modalConfig, setModalConfig] = useState({ visible: false, title: '', message: '' });
 
   const { company } = useSelector(state => state.auth);
   const user = useSelector(selectCurrentUser);
 
   const [getOrderStatusListing, { isLoading }] =
     useGetOrderStatusListingMutation();
+  const [getViewData, { isLoading: isViewLoading }] = useGetViewDataMutation();
+
+  const handleViewDetail = async order => {
+    try {
+      const res = await getViewData({
+        company: user?.company_user_code || company,
+        trans_no: order.trans_no || order.order_no || order.id || '',
+        type: order.type || '30', // Assuming 30 for Sales Order type by default if not passed
+      }).unwrap();
+
+      if (res && String(res.status_header) === 'true') {
+        const headerData = res.data_header?.[0] || {};
+        const detailData = res.data_detail || [];
+        await generateAndShareOrderChallanPDF(
+          'Delivery Challan',
+          headerData,
+          detailData,
+          user?.company_name || 'ANWAR & SONS'
+        );
+      }
+    } catch (e) {
+      console.log('Error fetching view data', e);
+      setModalConfig({
+        visible: true,
+        title: 'Share Cancelled',
+        message: e.message || 'User did not share.',
+      });
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -220,21 +258,51 @@ const SalesOrderStatusScreen = () => {
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.viewDetailsBtn}>
-            <Icon
-              name="eye"
-              size={16}
-              color="#FFFFFF"
-              style={{ marginRight: 6 }}
-            />
-            <Text style={styles.viewDetailsText}>View Details</Text>
-            <Icon
-              name="arrow-forward"
-              size={16}
-              color="#FFFFFF"
-              style={{ marginLeft: 4 }}
-            />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              style={[
+                styles.viewDetailsBtn,
+                { backgroundColor: theme.colors.success },
+              ]}
+              onPress={() =>
+                navigation.navigate('SalesPayment', {
+                  customer: { name: order.customer },
+                })
+              }
+            >
+              <Icon
+                name="cash-outline"
+                size={16}
+                color="#FFFFFF"
+                style={{ marginRight: 6 }}
+              />
+              <Text style={styles.viewDetailsText}>Payment</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.viewDetailsBtn}
+              onPress={() => handleViewDetail(order)}
+              disabled={isViewLoading}
+            >
+              {isViewLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 6 }} />
+              ) : (
+                <Icon
+                  name="eye"
+                  size={16}
+                  color="#FFFFFF"
+                  style={{ marginRight: 6 }}
+                />
+              )}
+              <Text style={styles.viewDetailsText}>View Details</Text>
+              <Icon
+                name="arrow-forward"
+                size={16}
+                color="#FFFFFF"
+                style={{ marginLeft: 4 }}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -282,7 +350,7 @@ const SalesOrderStatusScreen = () => {
             'APPROVED',
           )}
           {renderFilterButton(
-            'Unpaid',
+            'UnApproved',
             unapprovedCount,
             'warning',
             theme.colors.error,
@@ -311,33 +379,48 @@ const SalesOrderStatusScreen = () => {
         </ScrollView>
       </View>
 
-      <FlatList
-        data={filteredOrders}
-        keyExtractor={item => item.order_no}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isLoading}
-            onRefresh={fetchOrders}
-            colors={[theme.colors.primary]}
-          />
-        }
-        ListEmptyComponent={
-          !isLoading && (
-            <View style={styles.emptyState}>
-              <Icon
-                name="search-outline"
-                size={48}
-                color={theme.colors.border}
-              />
-              <Text style={styles.emptyStateText}>
-                No orders found matching your criteria
-              </Text>
-            </View>
-          )
-        }
+      {isLoading && orders.length === 0 ? (
+        <View
+          style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+        >
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={filteredOrders}
+          keyExtractor={item => item.order_no}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={fetchOrders}
+              colors={[theme.colors.primary]}
+            />
+          }
+          ListEmptyComponent={
+            !isLoading && (
+              <View style={styles.emptyState}>
+                <Icon
+                  name="search-outline"
+                  size={48}
+                  color={theme.colors.border}
+                />
+                <Text style={styles.emptyStateText}>
+                  No orders found matching your criteria
+                </Text>
+              </View>
+            )
+          }
+        />
+      )}
+      
+      <CustomAlertModal
+        visible={modalConfig.visible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onClose={() => setModalConfig({ ...modalConfig, visible: false })}
       />
     </KeyboardAvoidingView>
   );
@@ -513,7 +596,7 @@ const getStyles = theme =>
       justifyContent: 'center',
       backgroundColor: theme.colors.primary,
       paddingVertical: 12,
-      width: '100%',
+      width: '50%',
       borderRadius: 24,
     },
     viewDetailsText: {
