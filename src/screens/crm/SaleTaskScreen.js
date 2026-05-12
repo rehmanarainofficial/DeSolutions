@@ -32,12 +32,18 @@ import {
   useDeleteDailyWorkingPlanMutation,
 } from '@api/baseApi';
 
-const SaleTaskScreen = ({ navigation }) => {
+const SaleTaskScreen = ({ navigation, route }) => {
   const { theme } = useTheme();
   const styles = getStyles(theme);
   const user = useSelector(state => state.auth.user);
 
-  const [activeTab, setActiveTab] = useState('plan'); // 'plan' or 'progress'
+  const [activeTab, setActiveTab] = useState(route.params?.initialTab || 'plan'); // 'plan' or 'progress'
+
+  useEffect(() => {
+    if (route.params?.initialTab) {
+      setActiveTab(route.params.initialTab);
+    }
+  }, [route.params?.initialTab]);
 
   // Dropdown States
   const [selectedCategory, setSelectedCategory] = useState(null);

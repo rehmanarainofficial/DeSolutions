@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
@@ -14,17 +14,7 @@ import { useGetDailyWorkingPlanMutation } from '@api/baseApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@store/slices/authSlice';
 
-const quickActions = [
-  {
-    id: 'contact',
-    title: 'CRM\nCONTACT',
-    icon: 'people-outline',
-  },
-  {
-    id: 'hospital',
-    title: 'HOSPITAL',
-    icon: 'business-outline',
-  },
+const orderActions = [
   {
     id: 'new_order',
     title: 'NEW ORDER',
@@ -36,28 +26,31 @@ const quickActions = [
     icon: 'document-text-outline',
   },
   {
-    id: 'customer_balance',
-    title: 'CUSTOMER BALANCE',
-    icon: 'pie-chart-outline',
-  },
-  {
     id: 'supply_info',
     title: 'SUPPLY INFO',
     icon: 'bus-outline',
   },
   {
     id: 'payment',
-    title: 'PAYMENT ENTRY',
+    title: 'PAYMENT',
     icon: 'cash-outline',
-  },
-  {
-    id: 'sample',
-    title: 'SAMPLE REQUEST',
-    icon: 'flask-outline',
   },
 ];
 
-const reports = [
+const crmActions = [
+  {
+    id: 'contact',
+    title: 'CONTACTS',
+    icon: 'people-outline',
+  },
+  {
+    id: 'hospital',
+    title: 'HOSPITALS',
+    icon: 'business-outline',
+  },
+];
+
+const reportActions = [
   {
     id: 'sales_target',
     title: 'SALES VS\nTARGET',
@@ -65,18 +58,21 @@ const reports = [
   },
   {
     id: 'cust_balance',
-    title: 'CUSTOMER\nBALANCE',
+    title: 'CUSTOMER\nBALANCES',
     icon: 'pie-chart-outline',
   },
+];
+
+const expense = [
   {
-    id: 'collection',
-    title: 'COLLECTION\nREPORT',
+    id: 'expense',
+    title: 'FIELD EXPENSE',
     icon: 'wallet-outline',
   },
   {
-    id: 'daily_summary',
-    title: 'DAILY\nSUMMARY',
-    icon: 'calendar-outline',
+    id: 'sample',
+    title: 'SAMPLE REQUEST',
+    icon: 'flask-outline',
   },
 ];
 
@@ -109,13 +105,13 @@ const SaleManagementScreen = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       fetchDailyPlan();
-    }, [])
+    }, []),
   );
 
   const handleActionPress = item => {
     if (item.id === 'new_order') {
       navigation.navigate('SalesGenerateOrderScreen');
-    } else if (item.id === 'customer_balance') {
+    } else if (item.id === 'cust_balance' || item.id === 'customer_balance') {
       navigation.navigate('CustomerBalanceScreen');
     } else if (item.id === 'contact') {
       navigation.navigate('CRMContactList');
@@ -127,8 +123,9 @@ const SaleManagementScreen = ({ navigation }) => {
       navigation.navigate('SalesTrackOrderStatus');
     } else if (item.id === 'supply_info') {
       navigation.navigate('SupplyInfoScreen');
+    } else if (item.id === 'sample') {
+      navigation.navigate('CRMSampleRequest');
     }
-    // Handle other actions here
   };
 
   return (
@@ -137,151 +134,133 @@ const SaleManagementScreen = ({ navigation }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* TODAY'S PLAN SECTION */}
-        <View style={styles.sectionHeaderContainer}>
-          <Text style={styles.sectionTitle}>TODAY'S PLAN</Text>
+        {/* TOP ROW: ATTENDANCE, PLAN, PROGRESS */}
+        <View style={styles.topActionsRow}>
           <TouchableOpacity
+            style={styles.topActionCard}
             onPress={() => navigation.navigate('HCMAttendance')}
           >
-            <Text style={styles.sectionRightText}>ATTENDANCE</Text>
+            <Icon name="calendar-number" size={24} color="#0ea5e9" />
+            <Text style={styles.topActionTitle}>Mark{'\n'}Attendance</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.topActionCard}
+            onPress={() =>
+              navigation.navigate('SaleTask', { initialTab: 'plan' })
+            }
+          >
+            <Icon name="list-outline" size={24} color="#0ea5e9" />
+            <Text style={styles.topActionTitle}>TODAYS{'\n'}PLAN</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.topActionCard}
+            onPress={() =>
+              navigation.navigate('SaleTask', { initialTab: 'progress' })
+            }
+          >
+            <Icon name="trending-up-outline" size={24} color="#0ea5e9" />
+            <Text style={styles.topActionTitle}>TODAYS{'\n'}PROGRESS</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.planCard}>
-          <TouchableOpacity
-            style={styles.planHalf}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('SaleTask')}
-          >
-            <View
-              style={[
-                styles.iconCircle,
-                { backgroundColor: theme.colors.primary + '1A' },
-              ]}
-            >
-              <Icon
-                name="calendar-outline"
-                size={24}
-                color={theme.colors.primary}
-              />
-            </View>
-            <View style={styles.planTextCol}>
-              <Text style={styles.planCount}>
-                {dailyPlans?.length} <Text style={styles.planSub}>Tasks</Text>
-              </Text>
-              <Text style={styles.planSub}>Today</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.planHalf}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('HCMAttendance')}
-          >
-            <View
-              style={[
-                styles.iconCircle,
-                { backgroundColor: theme.colors.primary + '1A' },
-              ]}
-            >
-              <Icon
-                name="calendar-outline"
-                size={24}
-                color={theme.colors.primary}
-              />
-            </View>
-            <View style={styles.planTextCol}>
-              <Text style={styles.planMainText}>Mark</Text>
-              <Text style={styles.planMainText}>Attendance</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* QUICK ACTIONS SECTION */}
-        <Text
-          style={[styles.sectionTitle, { marginTop: 20, marginBottom: 12 }]}
-        >
-          QUICK ACTIONS
-        </Text>
-        <View style={styles.quickActionsGrid}>
-          {quickActions.map(action => (
+        {/* ORDERS SECTION */}
+        <Text style={styles.sectionHeader}>ORDERS</Text>
+        <View style={styles.gridRow}>
+          {orderActions.slice(0, 2).map(action => (
             <TouchableOpacity
               key={action.id}
-              style={styles.actionButton}
-              activeOpacity={0.7}
+              style={styles.gridItem}
               onPress={() => handleActionPress(action)}
             >
               <Icon
                 name={action.icon}
-                size={28}
-                color={theme.colors.primary}
-                style={styles.actionIcon}
+                size={20}
+                color="#0ea5e9"
+                style={styles.gridIcon}
               />
-              <Text style={styles.actionText}>{action.title}</Text>
+              <Text style={styles.gridItemText}>{action.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.gridRow}>
+          {orderActions.slice(2, 4).map(action => (
+            <TouchableOpacity
+              key={action.id}
+              style={styles.gridItem}
+              onPress={() => handleActionPress(action)}
+            >
+              <Icon
+                name={action.icon}
+                size={20}
+                color="#0ea5e9"
+                style={styles.gridIcon}
+              />
+              <Text style={styles.gridItemText}>{action.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* CRM SECTION */}
+        <Text style={styles.sectionHeader}>CRM</Text>
+        <View style={styles.gridRow}>
+          {crmActions.map(action => (
+            <TouchableOpacity
+              key={action.id}
+              style={styles.gridItem}
+              onPress={() => handleActionPress(action)}
+            >
+              <Icon
+                name={action.icon}
+                size={20}
+                color="#0ea5e9"
+                style={styles.gridIcon}
+              />
+              <Text style={styles.gridItemText}>{action.title}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         {/* REPORTS SECTION */}
-        <Text
-          style={[styles.sectionTitle, { marginTop: 20, marginBottom: 12 }]}
-        >
-          REPORTS
-        </Text>
-        <View style={styles.reportsGrid}>
-          {reports.map(report => (
+        <Text style={styles.sectionHeader}>REPORTS</Text>
+        <View style={styles.gridRow}>
+          {reportActions.map(action => (
             <TouchableOpacity
-              key={report.id}
-              style={styles.reportTile}
-              activeOpacity={0.7}
+              key={action.id}
+              style={styles.gridItem}
+              onPress={() => handleActionPress(action)}
             >
               <Icon
-                name={report.icon}
-                size={28}
-                color={theme.colors.primary}
-                style={styles.reportIcon}
+                name={action.icon}
+                size={20}
+                color="#0ea5e9"
+                style={styles.gridIcon}
               />
-              <Text style={styles.reportText}>{report.title}</Text>
+              <Text style={styles.gridItemText}>{action.title}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* FIELD EXPENSE SECTION */}
-        <Text
-          style={[styles.sectionTitle, { marginTop: 20, marginBottom: 12 }]}
-        >
-          FIELD EXPENSE
-        </Text>
-        <TouchableOpacity
-          style={styles.expenseCard}
-          activeOpacity={0.7}
-          onPress={() => navigation.navigate('CRMMonthlyExpense')}
-        >
-          <View
-            style={[
-              styles.iconCircle,
-              { backgroundColor: theme.colors.primary + '1A', marginRight: 16 },
-            ]}
-          >
-            <View
-              style={[
-                styles.iconCircle,
-                { backgroundColor: theme.colors.primary + '1A' },
-              ]}
+        {/* FIELD EXPENSE & SAMPLE SECTION */}
+        <Text style={styles.sectionHeader}>FIELD EXPENSE & SAMPLE</Text>
+        <View style={styles.gridRow}>
+          {expense.map(item => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.gridItem}
+              onPress={() => handleActionPress(item)}
             >
               <Icon
-                name="wallet-outline"
-                size={24}
-                color={theme.colors.primary}
+                name={item.icon}
+                size={20}
+                color="#0ea5e9"
+                style={styles.gridIcon}
               />
-            </View>
-          </View>
-          <View style={styles.expenseTextCol}>
-            <Text style={styles.expenseTitle}>Field Expense</Text>
-            <Text style={styles.expenseSub}>Add and manage expenses</Text>
-          </View>
-          <Icon name="chevron-forward" size={20} color="#9ca3af" />
-        </TouchableOpacity>
+              <Text style={styles.gridItemText}>{item.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -297,163 +276,78 @@ const getStyles = theme =>
       padding: 16,
       paddingBottom: 40,
     },
-    sectionHeaderContainer: {
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    scrollContent: {
+      padding: 16,
+      paddingBottom: 40,
+    },
+    topActionsRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
+      marginBottom: 24,
+    },
+    topActionCard: {
+      width: '31%',
+      aspectRatio: 1,
+      backgroundColor: theme.colors.surface,
+      borderRadius: 12,
+      justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: 12,
+      padding: 8,
+      elevation: 3,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    topActionTitle: {
+      fontSize: 11,
+      fontWeight: '800',
+      textAlign: 'center',
+      color: theme.colors.text,
       marginTop: 8,
     },
-    sectionTitle: {
-      fontSize: 14,
-      fontWeight: '800',
-      color: theme.colors.textSecondary,
-      letterSpacing: 0.5,
+    sectionHeader: {
+      fontSize: 16,
+      fontWeight: '900',
+      color: '#0ea5e9',
+      marginBottom: 12,
+      marginTop: 20,
     },
-    sectionRightText: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: '#3b82f6',
-      textTransform: 'uppercase',
-    },
-    planCard: {
+    gridRow: {
       flexDirection: 'row',
-      backgroundColor: theme.colors.surface,
-      borderRadius: 16,
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 3,
-      padding: 4,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-    },
-    planHalf: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 12,
-      backgroundColor: theme.colors.background,
-      borderRadius: 12,
-      margin: 4,
-    },
-    iconCircle: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    planTextCol: {
-      marginLeft: 12,
-      flex: 1,
-      justifyContent: 'center',
-    },
-    planCount: {
-      fontSize: 22,
-      fontWeight: '800',
-      color: theme.colors.text,
-      lineHeight: 26,
-    },
-    planSub: {
-      fontSize: 12,
-      fontWeight: '500',
-      color: theme.colors.textSecondary,
-    },
-    planMainText: {
-      fontSize: 13,
-      fontWeight: '700',
-      color: theme.colors.text,
-      lineHeight: 18,
-    },
-    quickActionsGrid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
       justifyContent: 'space-between',
-      rowGap: 12,
+      marginBottom: 12,
     },
-    actionButton: {
+    gridItem: {
       width: '48%',
+      height: 60,
+      backgroundColor: theme.colors.surface,
+      borderRadius: 8,
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: theme.colors.surface,
-      borderRadius: 16,
-      padding: 16,
+      paddingHorizontal: 12,
       elevation: 2,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 3,
+      shadowOpacity: 0.1,
+      shadowRadius: 1,
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
-    actionIcon: {
-      marginRight: 12,
+    gridIcon: {
+      marginRight: 10,
     },
-    actionText: {
+    gridItemText: {
       flex: 1,
-      fontSize: 12,
-      fontWeight: '700',
+      fontSize: 11,
+      fontWeight: '800',
       color: theme.colors.text,
-      lineHeight: 16,
-    },
-    reportsGrid: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-    },
-    reportTile: {
-      width: '23%',
-      backgroundColor: theme.colors.surface,
-      borderRadius: 16,
-      paddingVertical: 16,
-      paddingHorizontal: 4,
-      alignItems: 'center',
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 3,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-    },
-    reportIcon: {
-      marginBottom: 8,
-    },
-    reportText: {
-      fontSize: 10,
-      fontWeight: '700',
-      color: theme.colors.text,
-      textAlign: 'center',
-      lineHeight: 14,
-    },
-    expenseCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: theme.colors.surface,
-      borderRadius: 16,
-      padding: 16,
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 3,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-    },
-    expenseTextCol: {
-      flex: 1,
-    },
-    expenseTitle: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: theme.colors.text,
-      marginBottom: 2,
-    },
-    expenseSub: {
-      fontSize: 12,
-      fontWeight: '500',
-      color: theme.colors.textSecondary,
     },
   });
 
