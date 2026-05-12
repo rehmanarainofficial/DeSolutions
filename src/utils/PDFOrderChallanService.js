@@ -2,7 +2,7 @@ export const generateAndShareOrderChallanPDF = async (
   pdfType = 'Sales Order',
   headerData = {},
   detailData = [],
-  defaultCompanyName = 'ANWAR & SONS',
+  defaultCompanyName = '',
 ) => {
   let generatePDF, RNShare;
   try {
@@ -18,17 +18,30 @@ export const generateAndShareOrderChallanPDF = async (
 
   const dateStr = headerData.trans_date || '';
   const refNo = headerData.reference || '';
-  const customerName = headerData.name || null;
-  const paymentTerms = headerData.payment_terms || null;
+  const po_no = headerData.po_no || '';
+  const po_date = headerData.po_date || '';
+  const ship_to = headerData.ship_to || '';
+  const ship_via = headerData.ship_via || '';
 
-  const companyName = headerData?.company_name || defaultCompanyName;
-  const companyAddress = headerData?.company_address || null;
-  const phone = headerData?.company_phone || null;
-  const email = headerData?.company_email || null;
+  const customerName = headerData.name || '';
+  const customerAddress = headerData.address || '';
+  const customerNtn = headerData.cust_ntn || '';
+  const customerStrn = headerData.cust_strn || '';
+  const branchName = headerData.branch_name || '';
 
-  const bankName = headerData?.company_bank_name || null;
-  const bankTitle = headerData?.company_bank_title || null;
-  const bankAccount = headerData?.company_bank_account_no || null;
+  const companyName = headerData?.company_name || '';
+  const companyAddress = headerData?.company_address || '';
+  const companyNTN = headerData?.company_ntn || '';
+  const companyGST = headerData?.company_gst || '';
+  const companyPhone = headerData?.company_phone || '';
+  const companyEmail = headerData?.company_email || '';
+  const paymentTerms = headerData?.payment_terms || '';
+
+  const shipAddress = headerData?.ship_address || '';
+
+  const bankName = headerData?.company_bank_name || '';
+  const bankTitle = headerData?.company_bank_title || '';
+  const bankAccount = headerData?.company_bank_account_no || '';
 
   let htmlContent = '';
 
@@ -42,15 +55,14 @@ export const generateAndShareOrderChallanPDF = async (
         <td>${index + 1}</td>
         <td>${row.stock_id || ''}</td>
         <td>${row.description || ''}</td>
-        <td>${row.manufacturer || 'SMI, Belgium'}</td>
-        <td>Lot:${row.lot_no || row.lot_number || ''} Mfg:${
-                row.manufact_date || ''
-              } Exp:${row.exp_date || ''}</td>
-        <td>${row.um || 'Dozen'}</td>
-        <td>${parseFloat(row.qty_done || row.quantity || 0).toLocaleString(
-          undefined,
-          { minimumFractionDigits: 2 },
-        )}</td>
+        <td>${row.manufacturer || ''}</td>
+        <td>Lot:${row.lot_no || ''} Mfg:${row.manufact_date || ''} Exp:${
+                row.exp_date || ''
+              }</td>
+        <td>${row.unit || ''}</td>
+        <td>${parseFloat(row.quantity || 0).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+        })}</td>
       </tr>`;
             })
             .join('')
@@ -77,29 +89,29 @@ export const generateAndShareOrderChallanPDF = async (
               <td colspan="7" style="border: none; padding: 0;">
                 <div class="header-title">DELIVERY CHALLAN</div>
                 <div class="gst-info">
-                  <div>GST: 07-01-9018-008-64</div>
-                  <div>NTN: 0892299</div>
+                  <div>GST: ${companyGST}</div>
+                  <div>NTN: ${companyNTN}</div>
                 </div>
                 <div class="flex-between">
                   <div style="width: 50%;">
                     <div class="bold" style="font-size: 14px;">CUSTOMER</div>
                     <div>${customerName}</div>
-                    <div>15B, Street SS2, RCCI Industrial Estate Rawat Pakistan</div>
-                    <div>NTN:C344604 STRN:</div>
+                    <div>${customerAddress}</div>
+                    <div>NTN: ${customerNtn} STRN: ${customerStrn}</div>
                     <br/>
-                    <div>${customerName}</div>
+                    <div>${branchName}</div>
                   </div>
                   <div style="width: 40%;">
                     <div class="flex-between bold"><div>DC No</div><div>${refNo}</div></div>
                     <div class="flex-between bold"><div>DC Date</div><div>${dateStr}</div></div>
                     <hr style="margin: 2px 0;"/>
-                    <div class="flex-between"><div>Customer PO#:</div><div></div></div>
-                    <div class="flex-between"><div>PO Date</div><div>${dateStr}</div></div>
+                    <div class="flex-between"><div>Customer PO#:</div><div>${po_no}</div></div>
+                    <div class="flex-between"><div>PO Date</div><div>${po_date}</div></div>
                     <hr style="margin: 2px 0;"/>
-                    <div class="flex-between"><div>Shipping via:</div><div>TCS (Detain)</div></div>
+                    <div class="flex-between"><div>Shipping via:</div><div>${ship_via}</div></div>
                     <hr style="margin: 2px 0;"/>
-                    <div class="flex-between"><div>Ship To:</div><div>${customerName}</div></div>
-                    <div style="text-align: right;">15B, Street SS2, RCCI Industrial Estate Rawat Pakistan</div>
+                    <div class="flex-between"><div>Ship To:</div><div>${ship_to}</div></div>
+                    <div style="text-align: right;">${shipAddress}</div>
                   </div>
                 </div>
               </td>
@@ -129,16 +141,16 @@ export const generateAndShareOrderChallanPDF = async (
         ? detailData
             .map(row => {
               const price = parseFloat(row.unit_price || 0);
-              const qty = parseFloat(row.quantity || row.qty_done || 0);
+              const qty = parseFloat(row.quantity || 0);
               const rowTotal = price * qty;
               totalAmt += rowTotal;
               return `<tr>
         <td>${row.stock_id || ''}</td>
         <td>${row.description || ''}</td>
-        <td>${row.lot_no || row.lot || ''}</td>
+        <td>${row.lot_no || ''}</td>
         <td>${row.exp_date || ''}</td>
         <td style="text-align: right;">${qty.toLocaleString()}</td>
-        <td>${row.um || 'Dozen'}</td>
+        <td>${row.unit || ''}</td>
         <td style="text-align: right;">${price.toLocaleString(undefined, {
           minimumFractionDigits: 0,
         })}</td>
@@ -172,10 +184,10 @@ export const generateAndShareOrderChallanPDF = async (
               <td colspan="8" style="border: none; padding: 0;">
                 <div class="header-row">
                   <div>
-                    <div class="logo">O ${companyName}</div>
+                    <div class="logo">${companyName}</div>
                     <div style="margin-top: 10px; width: 300px; white-space: pre-wrap;">${companyAddress}</div>
-                    <div style="display: flex; margin-top: 5px;"><div style="width: 50px; font-style: italic;">Phone</div><div>${phone}</div></div>
-                    <div style="display: flex;"><div style="width: 50px; font-style: italic;">Email</div><div style="color: blue;">${email}</div></div>
+                    <div style="display: flex; margin-top: 5px;"><div style="width: 50px; font-style: italic;">Phone</div><div>${companyPhone}</div></div>
+                    <div style="display: flex;"><div style="width: 50px; font-style: italic;">Email</div><div style="color: blue;">${companyEmail}</div></div>
                   </div>
                   <div>
                     <div class="doc-type">SALES ORDER</div>
@@ -193,7 +205,7 @@ export const generateAndShareOrderChallanPDF = async (
                   <div style="width: 45%;">
                     <div class="bold">Charge To</div>
                     <div style="margin-top: 5px;">${customerName}</div>
-                    <div>7A Khayaban-e-Firdousi, Block R3 Block R 3 M.A Johar Town, Lahore, Punjab</div>
+                    <div>${customerAddress}</div>
                     <div style="margin-top: 15px;">${customerName}</div>
                     <div style="font-style: italic; margin-top: 15px;">Payment Terms: ${paymentTerms}</div>
                   </div>

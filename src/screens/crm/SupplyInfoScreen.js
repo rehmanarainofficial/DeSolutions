@@ -27,7 +27,11 @@ const SupplyInfoScreen = ({ navigation }) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [shipments, setShipments] = useState([]);
-  const [modalConfig, setModalConfig] = useState({ visible: false, title: '', message: '' });
+  const [modalConfig, setModalConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   const { company } = useSelector(state => state.auth);
   const user = useSelector(selectCurrentUser);
@@ -37,29 +41,34 @@ const SupplyInfoScreen = ({ navigation }) => {
   const [getViewData, { isLoading: isViewLoading }] = useGetViewDataMutation();
 
   const handleViewDetail = async item => {
+    console.log('Clicked Card Info:', item);
     try {
       const res = await getViewData({
-        company: user?.company_user_code || company,
-        trans_no: item.trans_no || item.order_no || item.id || '',
-        type: item.type || '13', // Type 13 for Sales Delivery/Supply
+        company: user?.company_user_code || company || '',
+        trans_no: item.trans_no || '',
+        type: item.type || '13', // Fallback to 13 for Supply Info
       }).unwrap();
+
+      console.log('API Response (SupplyInfo):', res);
 
       if (res && String(res.status_header) === 'true') {
         const headerData = res.data_header?.[0] || {};
         const detailData = res.data_detail || [];
         await generateAndShareOrderChallanPDF(
-          'Sales Order',
+          'Delivery Challan',
           headerData,
           detailData,
-          user?.company_name || 'ANWAR & SONS'
+          user?.company_name || '',
         );
+      } else {
+        console.log('API Response Error or No Data:', res);
       }
     } catch (e) {
       console.log('Error fetching view data', e);
       setModalConfig({
         visible: true,
-        title: 'Share Cancelled',
-        message: e.message || 'User did not share.',
+        title: 'Error',
+        message: e.message || 'Could not fetch data.',
       });
     }
   };
@@ -68,7 +77,7 @@ const SupplyInfoScreen = ({ navigation }) => {
     try {
       const response = await getOrderShippingInfo({
         company: user?.company_user_code || company,
-        user_id: user?.company_user_id || user?.id || '',
+        user_id: user?.company_user_id || '',
       }).unwrap();
 
       if (response && String(response.status) === 'true') {
@@ -247,11 +256,22 @@ const SupplyInfoScreen = ({ navigation }) => {
 
         {/* Action Buttons */}
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <TouchableOpacity 
-            style={[styles.detailBtn, { flex: 1, backgroundColor: theme.colors.success + '1A' }]}
-            onPress={() => navigation.navigate('SalesPayment', { customer: { name: item.customer } })}
+          <TouchableOpacity
+            style={[
+              styles.detailBtn,
+              { flex: 1, backgroundColor: theme.colors.success + '1A' },
+            ]}
+            onPress={() =>
+              navigation.navigate('SalesPayment', {
+                customer: { name: item.customer },
+              })
+            }
           >
-            <Text style={[styles.detailBtnText, { color: theme.colors.success }]}>Payment</Text>
+            <Text
+              style={[styles.detailBtnText, { color: theme.colors.success }]}
+            >
+              Payment
+            </Text>
             <Icon name="cash-outline" size={16} color={theme.colors.success} />
           </TouchableOpacity>
 
@@ -261,10 +281,18 @@ const SupplyInfoScreen = ({ navigation }) => {
             disabled={isViewLoading}
           >
             {isViewLoading ? (
-              <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginRight: 6 }} />
+              <ActivityIndicator
+                size="small"
+                color={theme.colors.primary}
+                style={{ marginRight: 6 }}
+              />
             ) : null}
             <Text style={styles.detailBtnText}>View Details</Text>
-            <Icon name="arrow-forward-outline" size={16} color={theme.colors.primary} />
+            <Icon
+              name="arrow-forward-outline"
+              size={16}
+              color={theme.colors.primary}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -302,13 +330,15 @@ const SupplyInfoScreen = ({ navigation }) => {
       </View>
 
       {isLoading && shipments.length === 0 ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View
+          style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+        >
           <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
       ) : (
         <FlatList
           data={filteredShipments}
-          keyExtractor={(item, index) => item.order_no || index.toString()}
+          keyExtractor={(item, index) => `${item.order_no || 'order'}-${index}`}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -322,7 +352,11 @@ const SupplyInfoScreen = ({ navigation }) => {
           ListEmptyComponent={
             !isLoading && (
               <View style={styles.emptyState}>
-                <Icon name="bus-outline" size={48} color={theme.colors.border} />
+                <Icon
+                  name="bus-outline"
+                  size={48}
+                  color={theme.colors.border}
+                />
                 <Text style={styles.emptyStateText}>No shipments found.</Text>
               </View>
             )

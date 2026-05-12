@@ -32,7 +32,11 @@ const SalesOrderStatusScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [orders, setOrders] = useState([]);
-  const [modalConfig, setModalConfig] = useState({ visible: false, title: '', message: '' });
+  const [modalConfig, setModalConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   const { company } = useSelector(state => state.auth);
   const user = useSelector(selectCurrentUser);
@@ -42,29 +46,34 @@ const SalesOrderStatusScreen = () => {
   const [getViewData, { isLoading: isViewLoading }] = useGetViewDataMutation();
 
   const handleViewDetail = async order => {
+    console.log('Clicked Order Info:', order);
     try {
       const res = await getViewData({
         company: user?.company_user_code || company,
-        trans_no: order.trans_no || order.order_no || order.id || '',
-        type: order.type || '30', // Assuming 30 for Sales Order type by default if not passed
+        trans_no: order.trans_no || '',
+        type: order.type || '30', // Fallback to 30 for Order Status
       }).unwrap();
+
+      console.log('API Response (OrderStatus):', res);
 
       if (res && String(res.status_header) === 'true') {
         const headerData = res.data_header?.[0] || {};
         const detailData = res.data_detail || [];
         await generateAndShareOrderChallanPDF(
-          'Delivery Challan',
+          'Sales Order',
           headerData,
           detailData,
-          user?.company_name || 'ANWAR & SONS'
+          user?.company_name || 'ANWAR & SONS',
         );
+      } else {
+        console.log('API Response Error or No Data:', res);
       }
     } catch (e) {
       console.log('Error fetching view data', e);
       setModalConfig({
         visible: true,
-        title: 'Share Cancelled',
-        message: e.message || 'User did not share.',
+        title: 'Error',
+        message: e.message || 'Could not fetch data.',
       });
     }
   };
@@ -72,13 +81,11 @@ const SalesOrderStatusScreen = () => {
   const fetchOrders = async () => {
     try {
       const response = await getOrderStatusListing({
-        company: user?.company_user_code || company,
-        user_id: user?.company_user_id || user?.id || '',
+        company: user?.company_user_code || '',
+        user_id: user?.company_user_id || '',
       }).unwrap();
 
       if (response && String(response.status) === 'true') {
-        // Add dummy status if API doesn't provide one, just for UI demonstration
-        // Assuming some are APPROVED and some UNAPPROVED
         const dataWithStatus = (response.data || []).map((item, idx) => ({
           ...item,
           status: item.status || (idx % 2 === 0 ? 'APPROVED' : 'UNAPPROVED'),
@@ -163,6 +170,8 @@ const SalesOrderStatusScreen = () => {
   };
 
   const renderItem = ({ item: order }) => {
+    console.log(order);
+
     return (
       <View style={styles.orderCard}>
         {/* Branch / Customer header */}
@@ -285,7 +294,11 @@ const SalesOrderStatusScreen = () => {
               disabled={isViewLoading}
             >
               {isViewLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 6 }} />
+                <ActivityIndicator
+                  size="small"
+                  color="#FFFFFF"
+                  style={{ marginRight: 6 }}
+                />
               ) : (
                 <Icon
                   name="eye"
@@ -388,7 +401,7 @@ const SalesOrderStatusScreen = () => {
       ) : (
         <FlatList
           data={filteredOrders}
-          keyExtractor={item => item.order_no}
+          keyExtractor={(item, index) => `${item.order_no || 'order'}-${index}`}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
@@ -415,7 +428,7 @@ const SalesOrderStatusScreen = () => {
           }
         />
       )}
-      
+
       <CustomAlertModal
         visible={modalConfig.visible}
         title={modalConfig.title}
