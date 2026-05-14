@@ -165,17 +165,54 @@ const AppNavigator = () => {
             />
             <Stack.Screen name="CRM" component={CRMScreen} />
             <Stack.Screen name="SalesCRM" component={SalesCRMScreen} />
-            <Stack.Screen name="SalesGenerateOrderScreen" component={SalesGenerateOrderScreen} options={{ title: 'Sale Generate Order' }} />
-            <Stack.Screen name="SaleManagement" component={SaleManagementScreen} />
-            <Stack.Screen name="SaleTask" component={SaleTaskScreen} options={{ title: 'Task Today' }} />
-            <Stack.Screen name="SupplyInfoScreen" component={SupplyInfoScreen} options={{ title: 'Supply Information' }} />
-            <Stack.Screen name="CustomerBalanceScreen" component={CustomerBalanceScreen} options={{ title: 'Customer Balance' }} />
+            <Stack.Screen
+              name="SalesGenerateOrderScreen"
+              component={SalesGenerateOrderScreen}
+              options={{ title: 'Sale Generate Order' }}
+            />
+            <Stack.Screen
+              name="SaleManagement"
+              component={SaleManagementScreen}
+            />
+            <Stack.Screen
+              name="SaleTask"
+              component={SaleTaskScreen}
+              options={{ title: 'Task Today' }}
+            />
+            <Stack.Screen
+              name="SupplyInfoScreen"
+              component={SupplyInfoScreen}
+              options={{ title: 'Supply Information' }}
+            />
+            <Stack.Screen
+              name="CustomerBalanceScreen"
+              component={CustomerBalanceScreen}
+              options={{ title: 'Customer Balance' }}
+            />
             <Stack.Screen name="Finance" component={FinanceScreen} />
             {/* Placeholder screens for module quick actions */}
-            <Stack.Screen name="SalesGenerateOrder" component={require('@screens/crm/SalesGenerateOrderScreen').default} options={{ title: 'Generate Order' }} />
-            <Stack.Screen name="SalesAddCustomer" component={SalesAddCustomerScreen} options={{ title: 'Add Customer' }} />
-            <Stack.Screen name="SalesOrderForm" component={SalesOrderFormScreen} options={{ title: 'Take Order' }} />
-            <Stack.Screen name="SalesPayment" component={SalesPaymentScreen} options={{ title: 'Payment' }} />
+            <Stack.Screen
+              name="SalesGenerateOrder"
+              component={
+                require('@screens/crm/SalesGenerateOrderScreen').default
+              }
+              options={{ title: 'Generate Order' }}
+            />
+            <Stack.Screen
+              name="SalesAddCustomer"
+              component={SalesAddCustomerScreen}
+              options={{ title: 'Add Customer' }}
+            />
+            <Stack.Screen
+              name="SalesOrderForm"
+              component={SalesOrderFormScreen}
+              options={{ title: 'Take Order' }}
+            />
+            <Stack.Screen
+              name="SalesPayment"
+              component={SalesPaymentScreen}
+              options={{ title: 'Payment' }}
+            />
             <Stack.Screen name="SalesDelivery" component={FinanceScreen} />
             <Stack.Screen
               name="SalesTrackOrderStatus"
@@ -228,7 +265,10 @@ const AppNavigator = () => {
             />
 
             <Stack.Screen name="HCMAttendance" component={AttendanceScreen} />
-            <Stack.Screen name="HCMExpenseClaim" component={ExpenseClaimInquiryScreen} />
+            <Stack.Screen
+              name="HCMExpenseClaim"
+              component={ExpenseClaimInquiryScreen}
+            />
             <Stack.Screen name="ExpenseClaim" component={ExpenseClaimScreen} />
             <Stack.Screen name="HCMDVRInquiry" component={FinanceScreen} />
             <Stack.Screen name="HCMLocalPurchase" component={FinanceScreen} />
@@ -243,19 +283,60 @@ const AppNavigator = () => {
             />
             <Stack.Screen name="MfgTransactions" component={FinanceScreen} />
 
-            <Stack.Screen name="CRMContactList" component={CRMContactListScreen} />
+            <Stack.Screen
+              name="CRMContactList"
+              component={CRMContactListScreen}
+            />
             <Stack.Screen name="CRMAddLead" component={CRMAddLeadScreen} />
-            <Stack.Screen name="CRMHospitalList" component={CRMHospitalListScreen} />
-            <Stack.Screen name="CRMAddHospital" component={CRMAddHospitalScreen} />
-            <Stack.Screen name="CRMMonthlyExpense" component={CRMMonthlyExpenseScreen} />
-            <Stack.Screen name="CRMSampleRequest" component={CRMSampleRequestScreen} />
-            <Stack.Screen name="CRMGiveawayRequest" component={CRMGiveawayRequestScreen} />
-            <Stack.Screen name="CRMWorkshopRequest" component={CRMWorkshopRequestScreen} />
-            <Stack.Screen name="CRMApprovalDashboard" component={CRMApprovalDashboard} options={{ title: 'Approval Dashboard' }} />
-            <Stack.Screen name="CRMMonthlyExpenseApproval" component={CRMMonthlyExpenseApprovalScreen} options={{ title: 'Expense Approval' }} />
-            <Stack.Screen name="CRMSampleApproval" component={CRMSampleApprovalScreen} options={{ title: 'Samples Approval' }} />
-            <Stack.Screen name="CRMWorkshopApproval" component={CRMWorkshopApprovalScreen} options={{ title: 'Workshops Approval' }} />
-            <Stack.Screen name="CRMGiveawayApproval" component={CRMGiveawayApprovalScreen} options={{ title: 'Give away Approval' }} />
+            <Stack.Screen
+              name="CRMHospitalList"
+              component={CRMHospitalListScreen}
+            />
+            <Stack.Screen
+              name="CRMAddHospital"
+              component={CRMAddHospitalScreen}
+            />
+            <Stack.Screen
+              name="CRMMonthlyExpense"
+              component={CRMMonthlyExpenseScreen}
+            />
+            <Stack.Screen
+              name="CRMSampleRequest"
+              component={CRMSampleRequestScreen}
+            />
+            <Stack.Screen
+              name="CRMGiveawayRequest"
+              component={CRMGiveawayRequestScreen}
+            />
+            <Stack.Screen
+              name="CRMWorkshopRequest"
+              component={CRMWorkshopRequestScreen}
+            />
+            <Stack.Screen
+              name="CRMApprovalDashboard"
+              component={CRMApprovalDashboard}
+              options={{ title: 'Approval Dashboard' }}
+            />
+            <Stack.Screen
+              name="CRMMonthlyExpenseApproval"
+              component={CRMMonthlyExpenseApprovalScreen}
+              options={{ title: 'Expense Approval' }}
+            />
+            <Stack.Screen
+              name="CRMSampleApproval"
+              component={CRMSampleApprovalScreen}
+              options={{ title: 'Samples Approval' }}
+            />
+            <Stack.Screen
+              name="CRMWorkshopApproval"
+              component={CRMWorkshopApprovalScreen}
+              options={{ title: 'Workshops Approval' }}
+            />
+            <Stack.Screen
+              name="CRMGiveawayApproval"
+              component={CRMGiveawayApprovalScreen}
+              options={{ title: 'Give away Approval' }}
+            />
             <Stack.Screen name="CRMViewLead" component={FinanceScreen} />
             <Stack.Screen name="CRMScheduleMeeting" component={FinanceScreen} />
             <Stack.Screen name="CRMLeadToOrder" component={FinanceScreen} />

@@ -1,68 +1,26 @@
-import React, { useLayoutEffect } from 'react';
-import { View, StyleSheet, FlatList, Text, TouchableOpacity, Image } from 'react-native';
+import React, { useLayoutEffect, useState, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  Text,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import { useTheme } from '@config/useTheme';
 import Icon from 'react-native-vector-icons/Ionicons';
-
-// Dummy data using the keys from the CRM Add Lead Form
-const DUMMY_CONTACTS = [
-  {
-    id: '1',
-    title: 'Dr.',
-    personName: 'Ahmed Khan',
-    gender: 'Male',
-    education: 'MBBS, FCPS',
-    personalEmail: 'ahmed.khan@example.com',
-    mobileNo: '+92 300 1234567',
-    city: 'Karachi',
-    community: 'Medical Assoc',
-    surgicalRole: 'Surgeon',
-    department: 'Cardiology',
-    surgerySpecialty: 'Heart Transplant',
-    yearOfPractice: '10 Years',
-    mainHospital: 'Aga Khan Hospital',
-    profilePic: 'https://i.pravatar.cc/150?u=ahmed',
-    businessCard: 'https://picsum.photos/seed/card1/400/200',
-  },
-  {
-    id: '2',
-    title: 'Prof.',
-    personName: 'Sara Ali',
-    gender: 'Female',
-    education: 'FRCS',
-    personalEmail: 'sara.ali@example.com',
-    mobileNo: '+92 321 7654321',
-    city: 'Lahore',
-    community: 'Neuro Society',
-    surgicalRole: 'Consultant',
-    department: 'Neurology',
-    surgerySpecialty: 'Brain Surgery',
-    yearOfPractice: '15 Years',
-    mainHospital: 'Shaukat Khanum',
-    profilePic: 'https://i.pravatar.cc/150?u=sara',
-    businessCard: 'https://picsum.photos/seed/card2/400/200',
-  },
-  {
-    id: '3',
-    title: 'Mr.',
-    personName: 'Usman Tariq',
-    gender: 'Male',
-    education: 'MBA',
-    personalEmail: 'usman.tariq@example.com',
-    mobileNo: '+92 333 9876543',
-    city: 'Islamabad',
-    community: 'Health Admin',
-    surgicalRole: 'N/A',
-    department: 'Administration',
-    surgerySpecialty: 'N/A',
-    yearOfPractice: '5 Years',
-    mainHospital: 'Shifa International',
-    profilePic: 'https://i.pravatar.cc/150?u=usman',
-    businessCard: 'https://picsum.photos/seed/card3/400/200',
-  },
-];
+import { useGetContactsDataMutation } from '@api/portalApi';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@store/slices/authSlice';
 
 const CRMContactListScreen = ({ navigation }) => {
   const { theme } = useTheme();
+  const user = useSelector(selectCurrentUser);
+  const [contacts, setContacts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [getContactsData, { isLoading }] = useGetContactsDataMutation();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -79,99 +37,252 @@ const CRMContactListScreen = ({ navigation }) => {
     });
   }, [navigation]);
 
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  const fetchContacts = async () => {
+    try {
+      const res = await getContactsData({ user_id: user?.id }).unwrap();
+      if (res.status === 'true') {
+        setContacts(res.data || []);
+      }
+    } catch (error) {
+      console.log('Fetch Contacts Error:', error);
+    }
+  };
+
+  const cleanText = text => {
+    if (!text) return '';
+    return text
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+  };
+
+  const filteredContacts = contacts.filter(item => {
+    const q = searchQuery.toLowerCase();
+    const name = (item.person_name || '').toLowerCase();
+    const dept = (item.department_name || '').toLowerCase();
+    const city = (item.city_name || '').toLowerCase();
+    const hosp = (item.hosp_1 || '').toLowerCase();
+    const cell = (item.cell_no || '').toLowerCase();
+    const role = (item.job_role_name || '').toLowerCase();
+    const specialty = (item.surgery || '').toLowerCase();
+
+    return (
+      name.includes(q) ||
+      dept.includes(q) ||
+      city.includes(q) ||
+      hosp.includes(q) ||
+      cell.includes(q) ||
+      role.includes(q) ||
+      specialty.includes(q)
+    );
+  });
+
   const renderKeyValue = (label, value) => (
     <View style={styles.keyValueCol}>
-      <Text style={[styles.keyText, { color: theme.colors.textSecondary }]}>{label}</Text>
-      <Text style={[styles.valueText, { color: theme.colors.text }]} numberOfLines={1}>
-        {value || '-'}
+      <Text style={[styles.keyText, { color: theme.colors.textSecondary }]}>
+        {label}
+      </Text>
+      <Text
+        style={[styles.valueText, { color: theme.colors.text }]}
+        numberOfLines={1}
+      >
+        {cleanText(value)}
       </Text>
     </View>
   );
 
   const renderContactCard = ({ item }) => (
-    <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-      
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
+      ]}
+    >
       {/* Header section with Name and Title */}
       <View style={styles.cardHeader}>
-        {item.profilePic ? (
-          <Image source={{ uri: item.profilePic }} style={styles.avatarImage} />
+        {item.profile_pic_url ? (
+          <Image
+            source={{ uri: item.profile_pic_url }}
+            style={styles.avatarImage}
+          />
         ) : (
-          <View style={[styles.avatar, { backgroundColor: theme.colors.primary + '20' }]}>
+          <View
+            style={[
+              styles.avatar,
+              { backgroundColor: theme.colors.primary + '20' },
+            ]}
+          >
             <Text style={[styles.avatarText, { color: theme.colors.primary }]}>
-              {item.personName.charAt(0)}
+              {item.person_name ? item.person_name.charAt(0) : 'C'}
             </Text>
           </View>
         )}
         <View style={styles.headerInfo}>
           <Text style={[styles.nameText, { color: theme.colors.text }]}>
-            {item.title} {item.personName}
+            {item.title_name} {item.person_name}
           </Text>
           <Text style={[styles.specialtyText, { color: theme.colors.primary }]}>
-            {item.department} {item.surgerySpecialty !== 'N/A' && `- ${item.surgerySpecialty}`}
+            {cleanText(item.department_name)}{' '}
+            {item.job_role_name && `- ${item.job_role_name}`}
           </Text>
         </View>
       </View>
-      
-      <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-      
+
+      <View
+        style={[styles.divider, { backgroundColor: theme.colors.border }]}
+      />
+
       {/* Detail Section */}
       <View style={styles.cardBody}>
         {/* Row 1 */}
         <View style={styles.row}>
-          {renderKeyValue('Mobile No', item.mobileNo)}
-          {renderKeyValue('City', item.city)}
+          {renderKeyValue('Mobile No', item.cell_no)}
+          {renderKeyValue('City', item.city_name)}
         </View>
 
         {/* Row 2 */}
         <View style={styles.row}>
-          {renderKeyValue('Gender', item.gender)}
-          {renderKeyValue('Education', item.education)}
+          {renderKeyValue('Gender', item.gender_name)}
+          {renderKeyValue('Education', item.education_name)}
         </View>
 
         {/* Row 3 */}
         <View style={styles.row}>
-          {renderKeyValue('Surgical Role', item.surgicalRole)}
-          {renderKeyValue('Experience', item.yearOfPractice)}
+          {renderKeyValue('Surgery', item.surgery)}
+          {renderKeyValue('Private Practice', item.private_practice)}
         </View>
 
         {/* Full Width Keys */}
         <View style={styles.fullWidthCol}>
-          <Text style={[styles.keyText, { color: theme.colors.textSecondary }]}>Email</Text>
-          <Text style={[styles.valueText, { color: theme.colors.text }]}>{item.personalEmail}</Text>
+          <Text style={[styles.keyText, { color: theme.colors.textSecondary }]}>
+            Hospital
+          </Text>
+          <Text style={[styles.valueText, { color: theme.colors.text }]}>
+            {cleanText(item.hosp_1)}
+          </Text>
         </View>
 
         <View style={styles.fullWidthCol}>
-          <Text style={[styles.keyText, { color: theme.colors.textSecondary }]}>Main Hospital</Text>
-          <Text style={[styles.valueText, { color: theme.colors.text }]}>{item.mainHospital}</Text>
+          <Text style={[styles.keyText, { color: theme.colors.textSecondary }]}>
+            Email
+          </Text>
+          <Text style={[styles.valueText, { color: theme.colors.text }]}>
+            {item.work_email || item.personal_email || '-'}
+          </Text>
         </View>
 
         {/* Business Card Section */}
-        {item.businessCard && (
+        {item.business_card_url ? (
           <View style={styles.businessCardContainer}>
-            <Text style={[styles.keyText, { color: theme.colors.textSecondary, marginBottom: 8 }]}>Business Card</Text>
-            <Image source={{ uri: item.businessCard }} style={styles.businessCardImage} />
+            <Text
+              style={[
+                styles.keyText,
+                { color: theme.colors.textSecondary, marginBottom: 8 },
+              ]}
+            >
+              Business Card
+            </Text>
+            <Image
+              source={{ uri: item.business_card_url }}
+              style={styles.businessCardImage}
+            />
           </View>
-        )}
+        ) : null}
       </View>
     </View>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <FlatList
-        data={DUMMY_CONTACTS}
-        keyExtractor={item => item.id}
-        renderItem={renderContactCard}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <View style={styles.searchContainer}>
+        <View
+          style={[
+            styles.searchBar,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Icon
+            name="search-outline"
+            size={20}
+            color={theme.colors.textSecondary}
+          />
+          <TextInput
+            style={[styles.searchInput, { color: theme.colors.text }]}
+            placeholder="Search contacts..."
+            placeholderTextColor={theme.colors.textSecondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery !== '' && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Icon
+                name="close-circle"
+                size={18}
+                color={theme.colors.textSecondary}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {isLoading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={filteredContacts}
+          keyExtractor={(item, index) => item.contact_id || index.toString()}
+          renderItem={renderContactCard}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <Text style={{ color: theme.colors.textSecondary }}>
+                No contacts found.
+              </Text>
+            </View>
+          )}
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  listContent: { padding: 16 },
+  listContent: { padding: 16, paddingTop: 8 },
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    height: 45,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    marginLeft: 8,
+  },
   card: {
     borderRadius: 16,
     borderWidth: 1,
@@ -257,6 +368,17 @@ const styles = StyleSheet.create({
     height: 160,
     borderRadius: 12,
     resizeMode: 'cover',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
   },
 });
 

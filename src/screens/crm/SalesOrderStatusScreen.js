@@ -276,6 +276,7 @@ const SalesOrderStatusScreen = () => {
               onPress={() =>
                 navigation.navigate('SalesPayment', {
                   customer: { name: order.customer },
+                  order_no: order.order_no,
                 })
               }
             >

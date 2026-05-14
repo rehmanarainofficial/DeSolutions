@@ -1,40 +1,25 @@
-import React, { useLayoutEffect } from 'react';
-import { View, StyleSheet, FlatList, Text, TouchableOpacity, Image } from 'react-native';
+import React, { useLayoutEffect, useState, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import { useTheme } from '@config/useTheme';
 import Icon from 'react-native-vector-icons/Ionicons';
-
-// Dummy data using keys matching Hospital Form
-const DUMMY_HOSPITALS = [
-  {
-    id: '1',
-    hospitalName: 'Aga Khan University Hospital',
-    address: 'Stadium Road, P.O. Box 3500',
-    city: 'Karachi',
-    website: 'www.akuh.edu',
-    type1: 'Private',
-    segment: 'A Class',
-    noOfOts: '14',
-    noOfBeds: '560',
-    status: 'Active',
-    customersType: 'Corporate',
-  },
-  {
-    id: '2',
-    hospitalName: 'Shaukat Khanum Memorial',
-    address: '7A Block R-3, Johar Town',
-    city: 'Lahore',
-    website: 'www.shaukatkhanum.org.pk',
-    type1: 'Trust',
-    segment: 'A Class',
-    noOfOts: '10',
-    noOfBeds: '400',
-    status: 'Active',
-    customersType: 'Non-Profit',
-  },
-];
+import { useGetHospitalDataMutation } from '@api/portalApi';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@store/slices/authSlice';
 
 const CRMHospitalListScreen = ({ navigation }) => {
   const { theme } = useTheme();
+  const user = useSelector(selectCurrentUser);
+  const [hospitals, setHospitals] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [getHospitalData, { isLoading }] = useGetHospitalDataMutation();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -51,82 +36,199 @@ const CRMHospitalListScreen = ({ navigation }) => {
     });
   }, [navigation]);
 
+  useEffect(() => {
+    fetchHospitals();
+  }, []);
+
+  const fetchHospitals = async () => {
+    try {
+      const res = await getHospitalData({ user_id: user?.id }).unwrap();
+      if (res.status === 'true') {
+        setHospitals(res.data || []);
+      }
+    } catch (error) {
+      console.log('Fetch Hospitals Error:', error);
+    }
+  };
+
+  const cleanText = text => {
+    if (!text) return '';
+    return text
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+  };
+
+  const filteredHospitals = hospitals.filter(item => {
+    const q = searchQuery.toLowerCase();
+    const hosp = (item.hosp_1 || '').toLowerCase();
+    const city = (item.city_name || '').toLowerCase();
+    const dept = (item.department_name || '').toLowerCase();
+    const contact = (item.person_name || '').toLowerCase();
+    const cell = (item.cell_no || '').toLowerCase();
+    const specialty = (item.surgery || '').toLowerCase();
+
+    return (
+      hosp.includes(q) ||
+      city.includes(q) ||
+      dept.includes(q) ||
+      contact.includes(q) ||
+      cell.includes(q) ||
+      specialty.includes(q)
+    );
+  });
+
   const renderKeyValue = (label, value) => (
     <View style={styles.keyValueCol}>
-      <Text style={[styles.keyText, { color: theme.colors.textSecondary }]}>{label}</Text>
-      <Text style={[styles.valueText, { color: theme.colors.text }]} numberOfLines={1}>
-        {value || '-'}
+      <Text style={[styles.keyText, { color: theme.colors.textSecondary }]}>
+        {label}
+      </Text>
+      <Text
+        style={[styles.valueText, { color: theme.colors.text }]}
+        numberOfLines={1}
+      >
+        {cleanText(value)}
       </Text>
     </View>
   );
 
   const renderHospitalCard = ({ item }) => (
-    <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-      
-      {/* Header section */}
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
+      ]}
+    >
       <View style={styles.cardHeader}>
-        <View style={[styles.avatar, { backgroundColor: theme.colors.primary + '20' }]}>
-          <Text style={[styles.avatarText, { color: theme.colors.primary }]}>
-            {item.hospitalName.charAt(0)}
-          </Text>
+        <View
+          style={[
+            styles.hospitalIcon,
+            { backgroundColor: theme.colors.primary + '15' },
+          ]}
+        >
+          <Icon name="business" size={24} color={theme.colors.primary} />
         </View>
         <View style={styles.headerInfo}>
           <Text style={[styles.nameText, { color: theme.colors.text }]}>
-            {item.hospitalName}
+            {cleanText(item.hosp_1)}
           </Text>
-          <Text style={[styles.specialtyText, { color: theme.colors.primary }]}>
-            {item.type1} - {item.segment}
+          <Text style={[styles.cityText, { color: theme.colors.textSecondary }]}>
+            <Icon name="location-outline" size={12} /> {item.city_name}
           </Text>
         </View>
       </View>
-      
+
       <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
-      
-      {/* Detail Section */}
+
       <View style={styles.cardBody}>
-        {/* Row 1 */}
         <View style={styles.row}>
-          {renderKeyValue('City', item.city)}
-          {renderKeyValue('Status', item.status)}
+          {renderKeyValue('Primary Contact', item.person_name)}
+          {renderKeyValue('Contact No', item.cell_no)}
+        </View>
+        <View style={styles.row}>
+          {renderKeyValue('Department', item.department_name)}
+          {renderKeyValue('Specialty', item.surgery)}
         </View>
 
-        {/* Row 2 */}
-        <View style={styles.row}>
-          {renderKeyValue('No. of Beds', item.noOfBeds)}
-          {renderKeyValue('No. of OTs', item.noOfOts)}
-        </View>
-
-        {/* Row 3 */}
-        <View style={styles.row}>
-          {renderKeyValue('Customer Type', item.customersType)}
-          {renderKeyValue('Website', item.website)}
-        </View>
-
-        {/* Full Width Keys */}
         <View style={styles.fullWidthCol}>
-          <Text style={[styles.keyText, { color: theme.colors.textSecondary }]}>Address</Text>
-          <Text style={[styles.valueText, { color: theme.colors.text }]}>{item.address}</Text>
+          <Text style={[styles.keyText, { color: theme.colors.textSecondary }]}>
+            Address
+          </Text>
+          <Text style={[styles.valueText, { color: theme.colors.text }]}>
+            {item.address || 'N/A'}
+          </Text>
         </View>
       </View>
     </View>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <FlatList
-        data={DUMMY_HOSPITALS}
-        keyExtractor={item => item.id}
-        renderItem={renderHospitalCard}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <View style={styles.searchContainer}>
+        <View
+          style={[
+            styles.searchBar,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Icon
+            name="search-outline"
+            size={20}
+            color={theme.colors.textSecondary}
+          />
+          <TextInput
+            style={[styles.searchInput, { color: theme.colors.text }]}
+            placeholder="Search hospitals..."
+            placeholderTextColor={theme.colors.textSecondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery !== '' && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Icon
+                name="close-circle"
+                size={18}
+                color={theme.colors.textSecondary}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {isLoading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={filteredHospitals}
+          keyExtractor={(item, index) => item.contact_id || index.toString()}
+          renderItem={renderHospitalCard}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <Text style={{ color: theme.colors.textSecondary }}>
+                No hospitals found.
+              </Text>
+            </View>
+          )}
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  listContent: { padding: 16 },
+  listContent: { padding: 16, paddingTop: 8 },
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    height: 45,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    marginLeft: 8,
+  },
   card: {
     borderRadius: 16,
     borderWidth: 1,
@@ -143,17 +245,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  avatar: {
+  hospitalIcon: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
-  },
-  avatarText: {
-    fontSize: 20,
-    fontWeight: '700',
   },
   headerInfo: {
     flex: 1,
@@ -163,8 +261,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 4,
   },
-  specialtyText: {
-    fontSize: 14,
+  cityText: {
+    fontSize: 13,
     fontWeight: '500',
   },
   divider: {
@@ -187,14 +285,25 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   keyText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     marginBottom: 2,
     textTransform: 'uppercase',
   },
   valueText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
   },
 });
 

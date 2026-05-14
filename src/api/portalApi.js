@@ -109,6 +109,67 @@ export const portalApi = baseApi.injectEndpoints({
         };
       },
     }),
+    postPayment: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        Object.keys(body).forEach(key => {
+          if (key === 'filename' && body[key]) {
+            formData.append(key, {
+              uri: body[key].uri,
+              type: body[key].type,
+              name: body[key].fileName || 'payment.jpg',
+            });
+          } else if (key === 'gl_detail') {
+            formData.append(
+              key,
+              typeof body[key] === 'string'
+                ? body[key]
+                : JSON.stringify(body[key]),
+            );
+          } else {
+            formData.append(key, body[key]);
+          }
+        });
+        return {
+          url: 'portal/post_service_payments.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
+    getContactsData: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', 'CRM');
+        formData.append('user_id', body.user_id);
+        return {
+          url: 'portal/get_contacts_data.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
+    getHospitalData: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', 'CRM');
+        formData.append('user_id', body.user_id);
+        return {
+          url: 'portal/get_hospital_data.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
   }),
   overrideExisting: true,
 });
@@ -121,4 +182,7 @@ export const {
   useGetOrderStatusListingMutation,
   useGetOutstandingReportMutation,
   useGetViewDataMutation,
+  usePostPaymentMutation,
+  useGetContactsDataMutation,
+  useGetHospitalDataMutation,
 } = portalApi;

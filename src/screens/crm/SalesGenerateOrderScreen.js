@@ -25,7 +25,11 @@ const CustomerCard = ({ item, theme }) => {
   const styles = getCardStyles(theme);
   const navigation = useNavigation();
   const user = useSelector(selectCurrentUser);
-  const [modalConfig, setModalConfig] = React.useState({ visible: false, title: '', message: '' });
+  const [modalConfig, setModalConfig] = React.useState({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   const cleanName = item.name ? item.name.replace(/&amp;/g, '&') : '';
   const displayName = item.city ? `${cleanName} , ${item.city}` : cleanName;
@@ -187,42 +191,6 @@ const CustomerCard = ({ item, theme }) => {
                 backgroundColor: theme.colors.primary + '0D',
               },
             ]}
-            onPress={() => {
-              const today = new Date();
-              const thirtyDaysAgo = new Date();
-              thirtyDaysAgo.setDate(today.getDate() - 30);
-
-              navigation.navigate('Ledger', {
-                personId: item.person_id || item.customer_id,
-                account: item.account,
-                company: user?.company_user_code,
-                title: item.name,
-                type: 'customer',
-                fromDate: thirtyDaysAgo.toISOString(),
-                toDate: today.toISOString(),
-              });
-            }}
-          >
-            <Icon
-              name="swap-horizontal"
-              size={16}
-              color={theme.colors.primary}
-            />
-            <Text
-              style={[styles.actionBtnText, { color: theme.colors.primary }]}
-            >
-              Outstanding
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.actionButton,
-              {
-                borderColor: theme.colors.primary,
-                backgroundColor: theme.colors.primary + '0D',
-              },
-            ]}
             onPress={handleSharePDF}
             disabled={isReportLoading}
           >
@@ -238,7 +206,7 @@ const CustomerCard = ({ item, theme }) => {
             <Text
               style={[styles.actionBtnText, { color: theme.colors.primary }]}
             >
-              Share PDF
+              Outstanding
             </Text>
           </TouchableOpacity>
         </View>

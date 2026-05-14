@@ -8,6 +8,8 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
+  Platform,
+  PermissionsAndroid,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Modal from 'react-native-modal';
@@ -17,9 +19,10 @@ import { useSelector } from 'react-redux';
 import {
   useGetStockMasterDropdownMutation,
   useGetCustBranchDropdownMutation,
+  useGetShippersMutation,
 } from '@api/baseApi';
 import { CustomDatePicker, SearchableDropdown } from '@components/common';
-import { launchImageLibrary } from 'react-native-image-picker';
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { usePostServicePurchSaleMutation } from '@api/portalApi';
 import { selectCurrentUser } from '@store/slices/authSlice';
 
@@ -43,6 +46,8 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
   );
   const [picture, setPicture] = useState(null);
   const [orderLoader, setOrderLoader] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState(null);
+  const [selectedShipperId, setSelectedShipperId] = useState(null);
 
   const { company } = useSelector(state => state.auth);
 
@@ -51,15 +56,35 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
   const [postOrder] = usePostServicePurchSaleMutation();
   const [products, setProducts] = useState([]);
   const [branches, setBranches] = useState([]);
-  const [selectedBranch, setSelectedBranch] = useState(null);
 
   const [getCustBranchDropdown, { isLoading: branchLoading }] =
     useGetCustBranchDropdownMutation();
+  const [getShippers] = useGetShippersMutation();
+
+  const [shippers, setShippers] = useState([]);
+  const [shippersLoading, setShippersLoading] = useState(false);
 
   React.useEffect(() => {
     fetchProducts();
     fetchBranches();
+    fetchShippers();
   }, []);
+
+  const fetchShippers = async () => {
+    setShippersLoading(true);
+    try {
+      const response = await getShippers({
+        company: user?.company_user_code || company,
+      }).unwrap();
+      if (response && String(response.status) === 'true') {
+        setShippers(response.data || []);
+      }
+    } catch (error) {
+      console.log('Error fetching shippers:', error);
+    } finally {
+      setShippersLoading(false);
+    }
+  };
 
   const fetchBranches = async () => {
     const customer = route.params?.customer || {};
@@ -81,9 +106,11 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
   };
 
   const fetchProducts = async () => {
+    const customer = route.params?.customer || {};
     try {
       const response = await getStockMaster({
         company: user?.company_user_code || company,
+        price_list: customer.price_list || '',
       }).unwrap();
       if (response && response.data) {
         setProducts(response.data);
@@ -194,7 +221,7 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
         branch_code: selectedBranch,
         total: String(grandTotal),
         price_list: customer.price_list || '',
-        ship_via: customer.ship_via || '',
+        ship_via: selectedShipperId || customer.ship_via || '',
         memo: '',
         purch_order_details: JSON.stringify(purch_order_details),
         user_id: user?.company_user_id || '',
@@ -251,6 +278,31 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
     }
   };
 
+  const handleCaptureImage = async () => {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        {
+          title: 'Camera Permission',
+          message: 'App needs camera permission to take photos.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+        Toast.show({ type: 'error', text1: 'Camera permission denied' });
+        return;
+      }
+    }
+
+    const options = { mediaType: 'photo', quality: 0.5, saveToPhotos: false };
+    const result = await launchCamera(options);
+    if (result.assets && result.assets.length > 0) {
+      setPicture(result.assets[0]);
+    }
+  };
+
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -265,7 +317,7 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
           {/* Select Branch */}
           <SearchableDropdown
             label="Select Branch"
-            placeholder="Choose a branch..."
+            placeholder="Select Branch"
             data={branches}
             selectedId={selectedBranch}
             onSelect={item => {
@@ -278,6 +330,19 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
             idKey="branch_code"
             labelKey="br_name"
             iconName="git-branch-outline"
+          />
+
+          {/* Select Shipper */}
+          <SearchableDropdown
+            label="Shipper"
+            placeholder="Select Shipper"
+            data={shippers}
+            selectedId={selectedShipperId}
+            onSelect={item => setSelectedShipperId(item.shipper_id)}
+            isLoading={shippersLoading}
+            idKey="shipper_id"
+            labelKey="shipper_name"
+            iconName="bus-outline"
           />
 
           {/* Select Product */}
@@ -554,30 +619,107 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
             />
           </View>
 
-          {/* Picture */}
-          <TouchableOpacity
-            onPress={handlePickImage}
-            style={[
-              styles.inputContainer,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-                borderWidth: 1,
-              },
-            ]}
-          >
-            <Text style={[styles.label, { color: theme.colors.text }]}>
-              Picture :
-            </Text>
+          {/* Attachment UI */}
+          <View style={styles.pictureSection}>
             <Text
-              style={[styles.inputValue, { color: theme.colors.textSecondary }]}
-              numberOfLines={1}
+              style={[
+                styles.label,
+                { color: theme.colors.textSecondary, marginBottom: 12 },
+              ]}
             >
-              {picture
-                ? picture.fileName || 'Image Selected'
-                : 'Choose from Gallery...'}
+              ATTACHMENT
             </Text>
-          </TouchableOpacity>
+            <View style={styles.pictureButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.uploadBtn,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                onPress={handleCaptureImage}
+              >
+                <View
+                  style={[
+                    styles.btnIconCircle,
+                    { backgroundColor: theme.colors.primary + '15' },
+                  ]}
+                >
+                  <Ionicons
+                    name="camera"
+                    size={20}
+                    color={theme.colors.primary}
+                  />
+                </View>
+                <Text
+                  style={[styles.uploadBtnText, { color: theme.colors.text }]}
+                >
+                  Camera
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.uploadBtn,
+                  {
+                    backgroundColor: theme.colors.surface,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                onPress={handlePickImage}
+              >
+                <View
+                  style={[
+                    styles.btnIconCircle,
+                    { backgroundColor: '#eab308' + '15' },
+                  ]}
+                >
+                  <Ionicons name="images" size={20} color="#eab308" />
+                </View>
+                <Text
+                  style={[styles.uploadBtnText, { color: theme.colors.text }]}
+                >
+                  Gallery
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {picture && (
+              <View
+                style={[
+                  styles.imagePreviewContainer,
+                  { backgroundColor: theme.colors.primary + '08' },
+                ]}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    flex: 1,
+                  }}
+                >
+                  <Ionicons
+                    name="document-attach-outline"
+                    size={18}
+                    color={theme.colors.primary}
+                  />
+                  <Text
+                    style={[
+                      styles.imageName,
+                      { color: theme.colors.text, marginLeft: 8 },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {picture.fileName || 'Image Selected'}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => setPicture(null)}>
+                  <Ionicons name="close-circle" size={20} color="#ef4444" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
 
           {/* Confirm order Button */}
           <TouchableOpacity
@@ -799,5 +941,55 @@ const styles = StyleSheet.create({
   productCode: {
     fontSize: 12,
     marginTop: 2,
+  },
+  pictureSection: {
+    marginVertical: 10,
+    padding: 10,
+  },
+  pictureButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  uploadBtn: {
+    flex: 1,
+    height: 60,
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  uploadBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  btnIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePreviewContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  imageName: {
+    fontSize: 13,
+    flex: 1,
+    fontWeight: '500',
   },
 });

@@ -62,12 +62,24 @@ const CustomerBalanceRow = ({ item, theme }) => {
       <View style={styles.colBalance}>
         <Text style={styles.balanceLabel}>
           Outstanding:{' '}
-          <Text style={styles.balanceValueRed}>
-            {Math.floor(item.outstanding || 0)}
+          <Text style={styles.balanceValueGreen}>
+            {parseFloat(item.outstanding || 0).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </Text>
         </Text>
         <Text style={styles.balanceLabel}>
-          Due: <Text style={styles.balanceValueRed}>{item.due ?? '0'}</Text>
+          Due:{' '}
+          <Text style={styles.balanceValueRed}>
+            {parseFloat(item.due?.replace(/,/g, '') || 0).toLocaleString(
+              undefined,
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              },
+            )}
+          </Text>
         </Text>
       </View>
 
@@ -191,20 +203,62 @@ const CustomerBalanceScreen = () => {
         >
           {/* Total Customers */}
           <View style={styles.statCard}>
-            <View style={[styles.statIconBg, { backgroundColor: theme.colors.primary + '1A' }]}>
+            <View
+              style={[
+                styles.statIconBg,
+                { backgroundColor: theme.colors.primary + '1A' },
+              ]}
+            >
               <Icon name="people" size={20} color={theme.colors.primary} />
             </View>
             <Text style={styles.statLabel}>TOTAL CUSTOMERS</Text>
             <Text style={styles.statValueDark}>{totalCustomers}</Text>
             <View style={styles.statFooterRow}>
-              <Icon name="person" size={12} color={theme.colors.textSecondary} />
+              <Icon
+                name="person"
+                size={12}
+                color={theme.colors.textSecondary}
+              />
               <Text style={styles.statFooterText}>Active accounts</Text>
+            </View>
+          </View>
+
+          {/* Total Outstanding */}
+          <View style={styles.statCard}>
+            <View
+              style={[
+                styles.statIconBg,
+                { backgroundColor: theme.colors.success + '1A' || '#dcfce7' },
+              ]}
+            >
+              <Icon
+                name="pie-chart"
+                size={20}
+                color={theme.colors.success || '#16a34a'}
+              />
+            </View>
+            <Text style={styles.statLabel}>TOTAL OUTSTANDING</Text>
+            <Text style={styles.statValueGreen}>
+              {formatNumber(totalOutstanding)}
+            </Text>
+            <View style={styles.statFooterRow}>
+              <Icon
+                name="trending-up"
+                size={12}
+                color={theme.colors.textSecondary}
+              />
+              <Text style={styles.statFooterText}>Total receivables</Text>
             </View>
           </View>
 
           {/* Total Due */}
           <View style={styles.statCard}>
-            <View style={[styles.statIconBg, { backgroundColor: theme.colors.error + '1A' }]}>
+            <View
+              style={[
+                styles.statIconBg,
+                { backgroundColor: theme.colors.error + '1A' },
+              ]}
+            >
               <Icon name="warning" size={20} color={theme.colors.error} />
             </View>
             <Text style={styles.statLabel}>TOTAL DUE</Text>
@@ -212,21 +266,6 @@ const CustomerBalanceScreen = () => {
             <View style={styles.statFooterRow}>
               <Icon name="time" size={12} color={theme.colors.textSecondary} />
               <Text style={styles.statFooterText}>Overdue + Current Due</Text>
-            </View>
-          </View>
-
-          {/* Total Outstanding */}
-          <View style={styles.statCard}>
-            <View style={[styles.statIconBg, { backgroundColor: theme.colors.success + '1A' || '#dcfce7' }]}>
-              <Icon name="pie-chart" size={20} color={theme.colors.success || '#16a34a'} />
-            </View>
-            <Text style={styles.statLabel}>TOTAL OUTSTANDING</Text>
-            <Text style={styles.statValueGreen}>
-              {formatNumber(totalOutstanding)}
-            </Text>
-            <View style={styles.statFooterRow}>
-              <Icon name="trending-up" size={12} color={theme.colors.textSecondary} />
-              <Text style={styles.statFooterText}>Total receivables</Text>
             </View>
           </View>
         </ScrollView>
@@ -397,6 +436,9 @@ const getRowStyles = theme =>
     balanceValueRed: {
       color: theme.colors.error,
     },
+    balanceValueGreen: {
+      color: theme.colors.success || '#16a34a',
+    },
     colActions: {
       flex: 1,
       alignItems: 'center',
@@ -421,136 +463,137 @@ const getRowStyles = theme =>
     },
   });
 
-const getStyles = theme => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  statsContainer: {
-    padding: 16,
-    gap: 12,
-  },
-  statCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  statIconBg: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  statLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: theme.colors.textSecondary,
-    marginBottom: 4,
-  },
-  statValueDark: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: theme.colors.text,
-    marginBottom: 8,
-  },
-  statValueRed: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: theme.colors.error,
-    marginBottom: 8,
-  },
-  statValueGreen: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: theme.colors.success || '#16a34a',
-    marginBottom: 8,
-  },
-  statFooterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statFooterText: {
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-    marginLeft: 6,
-  },
-  portfolioHeader: {
-    backgroundColor: theme.colors.surface,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    marginHorizontal: 8,
-    marginTop: 8,
-  },
-  portfolioTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  portfolioTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: theme.colors.text,
-  },
-  portfolioSubtitle: {
-    fontSize: 11,
-    color: theme.colors.textSecondary,
-  },
-  ledgerAccessBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.background,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  ledgerAccessText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: theme.colors.text,
-  },
-  tableHeaderRow: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    marginHorizontal: 8,
-  },
-  tableHeaderLabel: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: theme.colors.text,
-  },
-  centerMsg: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  retryBtn: {
-    marginTop: 16,
-    padding: 10,
-    backgroundColor: theme.colors.primary,
-    borderRadius: 8,
-  },
-});
+const getStyles = theme =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    statsContainer: {
+      padding: 16,
+      gap: 12,
+    },
+    statCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: 16,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+    statIconBg: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    statLabel: {
+      fontSize: 10,
+      fontWeight: '800',
+      color: theme.colors.textSecondary,
+      marginBottom: 4,
+    },
+    statValueDark: {
+      fontSize: 22,
+      fontWeight: '800',
+      color: theme.colors.text,
+      marginBottom: 8,
+    },
+    statValueRed: {
+      fontSize: 22,
+      fontWeight: '800',
+      color: theme.colors.error,
+      marginBottom: 8,
+    },
+    statValueGreen: {
+      fontSize: 22,
+      fontWeight: '800',
+      color: theme.colors.success || '#16a34a',
+      marginBottom: 8,
+    },
+    statFooterRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    statFooterText: {
+      fontSize: 11,
+      color: theme.colors.textSecondary,
+      marginLeft: 6,
+    },
+    portfolioHeader: {
+      backgroundColor: theme.colors.surface,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+      marginHorizontal: 8,
+      marginTop: 8,
+    },
+    portfolioTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+    portfolioTitle: {
+      fontSize: 16,
+      fontWeight: '800',
+      color: theme.colors.text,
+    },
+    portfolioSubtitle: {
+      fontSize: 11,
+      color: theme.colors.textSecondary,
+    },
+    ledgerAccessBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.background,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 20,
+    },
+    ledgerAccessText: {
+      fontSize: 10,
+      fontWeight: '700',
+      color: theme.colors.text,
+    },
+    tableHeaderRow: {
+      flexDirection: 'row',
+      backgroundColor: theme.colors.surface,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+      marginHorizontal: 8,
+    },
+    tableHeaderLabel: {
+      fontSize: 9,
+      fontWeight: '800',
+      color: theme.colors.text,
+    },
+    centerMsg: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    retryBtn: {
+      marginTop: 16,
+      padding: 10,
+      backgroundColor: theme.colors.primary,
+      borderRadius: 8,
+    },
+  });
 
 export default CustomerBalanceScreen;

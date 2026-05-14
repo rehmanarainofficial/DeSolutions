@@ -39,14 +39,14 @@ const orderActions = [
 
 const crmActions = [
   {
-    id: 'contact',
-    title: 'CONTACTS',
-    icon: 'people-outline',
-  },
-  {
     id: 'hospital',
     title: 'HOSPITALS',
     icon: 'business-outline',
+  },
+  {
+    id: 'contact',
+    title: 'CONTACTS',
+    icon: 'people-outline',
   },
 ];
 
@@ -140,27 +140,33 @@ const SaleManagementScreen = ({ navigation }) => {
             style={styles.topActionCard}
             onPress={() => navigation.navigate('HCMAttendance')}
           >
-            <Icon name="calendar-number" size={24} color="#0ea5e9" />
+            <Icon name="calendar-number" size={24} color={theme.colors.primary} />
             <Text style={styles.topActionTitle}>Mark{'\n'}Attendance</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.topActionCard}
             onPress={() =>
-              navigation.navigate('SaleTask', { initialTab: 'plan' })
+              navigation.navigate('SaleTask', {
+                initialTab: 'plan',
+                showTabs: false,
+              })
             }
           >
-            <Icon name="list-outline" size={24} color="#0ea5e9" />
+            <Icon name="list-outline" size={24} color={theme.colors.primary} />
             <Text style={styles.topActionTitle}>TODAYS{'\n'}PLAN</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.topActionCard}
             onPress={() =>
-              navigation.navigate('SaleTask', { initialTab: 'progress' })
+              navigation.navigate('SaleTask', {
+                initialTab: 'progress',
+                showTabs: false,
+              })
             }
           >
-            <Icon name="trending-up-outline" size={24} color="#0ea5e9" />
+            <Icon name="trending-up-outline" size={24} color={theme.colors.primary} />
             <Text style={styles.topActionTitle}>TODAYS{'\n'}PROGRESS</Text>
           </TouchableOpacity>
         </View>
@@ -177,7 +183,7 @@ const SaleManagementScreen = ({ navigation }) => {
               <Icon
                 name={action.icon}
                 size={20}
-                color="#0ea5e9"
+                color={theme.colors.primary}
                 style={styles.gridIcon}
               />
               <Text style={styles.gridItemText}>{action.title}</Text>
@@ -194,7 +200,7 @@ const SaleManagementScreen = ({ navigation }) => {
               <Icon
                 name={action.icon}
                 size={20}
-                color="#0ea5e9"
+                color={theme.colors.primary}
                 style={styles.gridIcon}
               />
               <Text style={styles.gridItemText}>{action.title}</Text>
@@ -214,7 +220,7 @@ const SaleManagementScreen = ({ navigation }) => {
               <Icon
                 name={action.icon}
                 size={20}
-                color="#0ea5e9"
+                color={theme.colors.primary}
                 style={styles.gridIcon}
               />
               <Text style={styles.gridItemText}>{action.title}</Text>
@@ -234,7 +240,7 @@ const SaleManagementScreen = ({ navigation }) => {
               <Icon
                 name={action.icon}
                 size={20}
-                color="#0ea5e9"
+                color={theme.colors.primary}
                 style={styles.gridIcon}
               />
               <Text style={styles.gridItemText}>{action.title}</Text>
@@ -254,7 +260,7 @@ const SaleManagementScreen = ({ navigation }) => {
               <Icon
                 name={item.icon}
                 size={20}
-                color="#0ea5e9"
+                color={theme.colors.primary}
                 style={styles.gridIcon}
               />
               <Text style={styles.gridItemText}>{item.title}</Text>
@@ -315,7 +321,7 @@ const getStyles = theme =>
     sectionHeader: {
       fontSize: 16,
       fontWeight: '900',
-      color: '#0ea5e9',
+      color: theme.colors.primary,
       marginBottom: 12,
       marginTop: 20,
     },

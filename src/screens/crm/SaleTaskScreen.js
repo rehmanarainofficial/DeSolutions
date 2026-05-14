@@ -592,46 +592,48 @@ const SaleTaskScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <View style={styles.tabsContainer}>
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'plan' && {
-              backgroundColor: theme.colors.primary,
-              borderColor: theme.colors.primary,
-            },
-          ]}
-          onPress={() => setActiveTab('plan')}
-        >
-          <Text
+      {route.params?.showTabs !== false && (
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity
             style={[
-              styles.tabText,
-              activeTab === 'plan' && styles.activeTabText,
+              styles.tab,
+              activeTab === 'plan' && {
+                backgroundColor: theme.colors.primary,
+                borderColor: theme.colors.primary,
+              },
             ]}
+            onPress={() => setActiveTab('plan')}
           >
-            PLAN
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === 'progress' && {
-              backgroundColor: theme.colors.primary,
-              borderColor: theme.colors.primary,
-            },
-          ]}
-          onPress={() => setActiveTab('progress')}
-        >
-          <Text
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'plan' && styles.activeTabText,
+              ]}
+            >
+              PLAN
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[
-              styles.tabText,
-              activeTab === 'progress' && styles.activeTabText,
+              styles.tab,
+              activeTab === 'progress' && {
+                backgroundColor: theme.colors.primary,
+                borderColor: theme.colors.primary,
+              },
             ]}
+            onPress={() => setActiveTab('progress')}
           >
-            PROGRESS
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'progress' && styles.activeTabText,
+              ]}
+            >
+              PROGRESS
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}

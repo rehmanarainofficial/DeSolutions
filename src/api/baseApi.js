@@ -46,6 +46,9 @@ export const baseApi = createApi({
       query: body => {
         const formData = new FormData();
         formData.append('company', body.company);
+        if (body.price_list) {
+          formData.append('price_list', body.price_list);
+        }
 
         return {
           url: 'dropdown/stock_master.php',
@@ -246,6 +249,35 @@ export const baseApi = createApi({
         };
       },
     }),
+    getBankNames: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', body.company);
+
+        return {
+          url: 'dropdown/bank_name.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
+    getShippers: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', body.company);
+        return {
+          url: 'dropdown/shippers.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
   }),
 });
 
@@ -263,6 +295,8 @@ export const {
   useGetCustBranchDropdownMutation,
   useDeleteDailyWorkingPlanMutation,
   useToggleErpStatusMutation,
+  useGetBankNamesMutation,
+  useGetShippersMutation,
 } = baseApi;
 
 export default baseApi;

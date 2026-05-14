@@ -26,6 +26,7 @@ const SupplyInfoScreen = ({ navigation }) => {
   const styles = getStyles(theme);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
   const [shipments, setShipments] = useState([]);
   const [modalConfig, setModalConfig] = useState({
     visible: false,
@@ -41,15 +42,12 @@ const SupplyInfoScreen = ({ navigation }) => {
   const [getViewData, { isLoading: isViewLoading }] = useGetViewDataMutation();
 
   const handleViewDetail = async item => {
-    console.log('Clicked Card Info:', item);
     try {
       const res = await getViewData({
         company: user?.company_user_code || company || '',
         trans_no: item.trans_no || '',
-        type: item.type || '13', // Fallback to 13 for Supply Info
+        type: item.type || '',
       }).unwrap();
-
-      console.log('API Response (SupplyInfo):', res);
 
       if (res && String(res.status_header) === 'true') {
         const headerData = res.data_header?.[0] || {};
@@ -98,13 +96,19 @@ const SupplyInfoScreen = ({ navigation }) => {
     const orderNo = (item.order_no || '').toLowerCase();
     const reference = (item.reference || '').toLowerCase();
     const tracking = (item.tracking_no || '').toLowerCase();
+    const shipper = (item.shipper_name || '').toLowerCase();
 
-    return (
+    const matchesSearch =
       customer.includes(query) ||
       orderNo.includes(query) ||
       reference.includes(query) ||
-      tracking.includes(query)
-    );
+      tracking.includes(query) ||
+      shipper.includes(query);
+
+    if (statusFilter === 'All') return matchesSearch;
+    const isReceived = item.shipment_status === '1';
+    const status = isReceived ? 'Delivered' : 'In Transit';
+    return matchesSearch && status === statusFilter;
   });
 
   const formatDate = dateString => {
@@ -327,6 +331,60 @@ const SupplyInfoScreen = ({ navigation }) => {
             Showing {filteredShipments.length} records
           </Text>
         </View>
+
+        {/* Filters Row */}
+        <View style={styles.filterRow}>
+          <TouchableOpacity
+            style={[
+              styles.filterChip,
+              statusFilter === 'Delivered' && styles.filterChipActive,
+            ]}
+            onPress={() =>
+              setStatusFilter(statusFilter === 'Delivered' ? 'All' : 'Delivered')
+            }
+          >
+            <Text
+              style={[
+                styles.filterChipText,
+                statusFilter === 'Delivered' && styles.filterChipTextActive,
+              ]}
+            >
+              Delivered
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.filterChip,
+              statusFilter === 'In Transit' && styles.filterChipActive,
+            ]}
+            onPress={() =>
+              setStatusFilter(
+                statusFilter === 'In Transit' ? 'All' : 'In Transit',
+              )
+            }
+          >
+            <Text
+              style={[
+                styles.filterChipText,
+                statusFilter === 'In Transit' && styles.filterChipTextActive,
+              ]}
+            >
+              In Transit
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.clearFilterBtn}
+            onPress={() => {
+              setSearchQuery('');
+              setStatusFilter('All');
+            }}
+          >
+            <Icon name="refresh-outline" size={14} color="#64748b" />
+            <Text style={styles.clearFilterText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {isLoading && shipments.length === 0 ? (
@@ -425,6 +483,43 @@ const getStyles = theme =>
       fontSize: 12,
       fontWeight: '600',
       color: theme.colors.textSecondary,
+    },
+    filterRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginTop: 12,
+    },
+    filterChip: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.background,
+    },
+    filterChipActive: {
+      backgroundColor: theme.colors.primary,
+      borderColor: theme.colors.primary,
+    },
+    filterChipText: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.colors.textSecondary,
+    },
+    filterChipTextActive: {
+      color: '#fff',
+    },
+    clearFilterBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginLeft: 'auto',
+      gap: 4,
+    },
+    clearFilterText: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: '#64748b',
     },
     listContent: {
       padding: 16,
