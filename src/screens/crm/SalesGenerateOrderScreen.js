@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  TextInput,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -128,7 +130,7 @@ const CustomerCard = ({ item, theme }) => {
             <Text style={styles.detailLabel}>PAYMENT TERMS</Text>
           </View>
           <Text style={styles.detailValueBlack}>
-            {item.payment_terms ? `${item.payment_terms} Days` : '0 Days'}
+            {item.payment_terms ? `${item.payment_terms}` : '0'}
           </Text>
 
           {/* Credit Limit */}
@@ -243,6 +245,9 @@ const CustomerCard = ({ item, theme }) => {
 const SalesGenerateOrderScreen = () => {
   const { theme } = useTheme();
   const user = useSelector(selectCurrentUser);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchCriteria, setSearchCriteria] = React.useState('NAME'); // NAME, CITY
+  const styles = getCardStyles(theme);
 
   const { data, isLoading, isFetching, refetch, error } =
     useGetDebtorsMasterQuery(
@@ -281,13 +286,24 @@ const SalesGenerateOrderScreen = () => {
       }
 
       if (dataArray.length > 0) {
-        return dataArray;
+        if (!searchQuery) return dataArray;
+
+        return dataArray.filter(customer => {
+          const query = searchQuery.toLowerCase();
+          if (searchCriteria === 'NAME') {
+            return (customer.name || '').toLowerCase().includes(query);
+          } else if (searchCriteria === 'CITY') {
+            return (customer.city || '').toLowerCase().includes(query);
+          }
+          return (customer.name || '').toLowerCase().includes(query) || 
+                 (customer.city || '').toLowerCase().includes(query);
+        });
       }
     } catch (e) {
       console.log('Error parsing data:', e);
     }
     return [];
-  }, [data]);
+  }, [data, searchQuery, searchCriteria]);
 
   return (
     <SafeAreaView
@@ -325,33 +341,71 @@ const SalesGenerateOrderScreen = () => {
           </TouchableOpacity>
         </View>
       ) : (
-        <FlatList
-          data={customerCards}
-          keyExtractor={(item, index) => item.debtor_no + '-' + index}
-          renderItem={({ item }) => <CustomerCard item={item} theme={theme} />}
-          contentContainerStyle={{ padding: 16, gap: 16 }}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={isFetching} onRefresh={refetch} />
-          }
-          ListEmptyComponent={
-            <View style={{ padding: 20 }}>
-              <Text
-                style={{
-                  textAlign: 'center',
-                  color: theme.colors.textSecondary,
-                }}
-              >
-                {!user?.company_user_code || !user?.company_user_id
-                  ? 'Missing company_user_code or company_user_id for API.'
-                  : data
-                  ? 'No customers found. Data received: ' +
-                    JSON.stringify(data).substring(0, 50)
-                  : 'No customers found.'}
-              </Text>
+        <>
+          {/* Search Section */}
+          <View style={styles.searchContainer}>
+            <View style={styles.searchBar}>
+              <Icon name="search" size={20} color={theme.colors.textSecondary} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder={`Search by ${searchCriteria.toLowerCase()}...`}
+                placeholderTextColor={theme.colors.textSecondary}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Icon name="close-circle" size={20} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+              )}
             </View>
-          }
-        />
+            <View style={styles.criteriaContainer}>
+              {['NAME', 'CITY'].map((criteria) => (
+                <TouchableOpacity
+                  key={criteria}
+                  style={[
+                    styles.criteriaChip,
+                    searchCriteria === criteria && styles.activeCriteriaChip
+                  ]}
+                  onPress={() => setSearchCriteria(criteria)}
+                >
+                  <Text style={[
+                    styles.criteriaText,
+                    searchCriteria === criteria && styles.activeCriteriaText
+                  ]}>{criteria}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <FlatList
+            data={customerCards}
+            keyExtractor={(item, index) => item.debtor_no + '-' + index}
+            renderItem={({ item }) => <CustomerCard item={item} theme={theme} />}
+            contentContainerStyle={{ padding: 16, gap: 16 }}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={isFetching} onRefresh={refetch} />
+            }
+            ListEmptyComponent={
+              <View style={{ padding: 20 }}>
+                <Text
+                  style={{
+                    textAlign: 'center',
+                    color: theme.colors.textSecondary,
+                  }}
+                >
+                  {searchQuery ? 'No customers match your search.' : 
+                  (!user?.company_user_code || !user?.company_user_id
+                    ? 'Missing company_user_code or company_user_id for API.'
+                    : data
+                    ? 'No customers found.'
+                    : 'No customers found.')}
+                </Text>
+              </View>
+            }
+          />
+        </>
       )}
     </SafeAreaView>
   );
@@ -486,6 +540,59 @@ const getCardStyles = theme =>
       fontWeight: '600',
       color: '#ef4444',
     },
+    // Search Styles
+    searchContainer: {
+      padding: 16,
+      backgroundColor: '#FFFFFF',
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.background,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      height: 48,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    searchInput: {
+      flex: 1,
+      fontSize: 14,
+      color: theme.colors.text,
+      marginLeft: 8,
+    },
+    criteriaContainer: {
+      flexDirection: 'row',
+      marginTop: 12,
+      gap: 8,
+    },
+    criteriaChip: {
+      paddingHorizontal: 16,
+      paddingVertical: 6,
+      borderRadius: 20,
+      backgroundColor: theme.colors.background,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    activeCriteriaChip: {
+      backgroundColor: theme.colors.primary,
+      borderColor: theme.colors.primary,
+    },
+    criteriaText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.colors.textSecondary,
+    },
+    activeCriteriaText: {
+      color: '#FFFFFF',
+    },
   });
+
+const getStyles = (theme) => {
+  // Adding this to avoid reference error if getStyles is used elsewhere
+  return StyleSheet.create({});
+};
 
 export default SalesGenerateOrderScreen;

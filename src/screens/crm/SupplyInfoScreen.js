@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -90,6 +91,30 @@ const SupplyInfoScreen = ({ navigation }) => {
     fetchShipments();
   }, []);
 
+  const getStatusInfo = shipStatus => {
+    const statusValue = String(shipStatus);
+    switch (statusValue) {
+      case '0':
+        return { text: 'Not Start Yet', color: '#64748b', bg: '#f1f5f9' };
+      case '1':
+        return { text: 'Booked', color: '#3b82f6', bg: '#dbeafe' };
+      case '2':
+        return { text: 'In Transit', color: '#f59e0b', bg: '#fef3c7' };
+      case '3':
+        return {
+          text: 'Arrived At OPS Facility',
+          color: '#8b5cf6',
+          bg: '#ede9fe',
+        };
+      case '4':
+        return { text: 'Out-for-Delivery', color: '#ec4899', bg: '#fce7f3' };
+      case '5':
+        return { text: 'Delivered', color: '#10b981', bg: '#d1fae5' };
+      default:
+        return { text: 'In Transit', color: '#f59e0b', bg: '#fef3c7' };
+    }
+  };
+
   const filteredShipments = shipments.filter(item => {
     const query = searchQuery.toLowerCase();
     const customer = (item.customer || '').toLowerCase();
@@ -106,9 +131,9 @@ const SupplyInfoScreen = ({ navigation }) => {
       shipper.includes(query);
 
     if (statusFilter === 'All') return matchesSearch;
-    const isReceived = item.shipment_status === '1';
-    const status = isReceived ? 'Delivered' : 'In Transit';
-    return matchesSearch && status === statusFilter;
+
+    const statusInfo = getStatusInfo(item.shipment_status);
+    return matchesSearch && statusInfo.text === statusFilter;
   });
 
   const formatDate = dateString => {
@@ -143,10 +168,10 @@ const SupplyInfoScreen = ({ navigation }) => {
   };
 
   const renderItem = ({ item }) => {
-    const isReceived = item.shipment_status === '1';
-    const statusText = isReceived ? 'Delivered' : 'In Transit';
-    const statusColor = isReceived ? '#10b981' : '#f59e0b';
-    const statusBg = isReceived ? '#d1fae5' : '#fef3c7';
+    const statusInfo = getStatusInfo(item.shipment_status);
+    const statusText = statusInfo.text;
+    const statusColor = statusInfo.color;
+    const statusBg = statusInfo.bg;
 
     return (
       <View style={styles.card}>
@@ -170,8 +195,8 @@ const SupplyInfoScreen = ({ navigation }) => {
         {/* Total Amount & Reference - Stacked specifically for mobile */}
         <View style={styles.amountReferenceSection}>
           <View>
-            <Text style={styles.infoLabel}>Reference</Text>
-            <Text style={styles.infoValueDark}>{item.reference}</Text>
+            <Text style={styles.infoLabel}>DN Reference</Text>
+            <Text style={styles.infoValueDark}>{item.disp_reference}</Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={styles.infoLabel}>Order Total</Text>
@@ -235,6 +260,11 @@ const SupplyInfoScreen = ({ navigation }) => {
             <Text style={styles.infoValue} numberOfLines={1}>
               {item.person || '-'}
             </Text>
+          </View>
+
+          <View style={styles.infoCol}>
+            <Text style={styles.infoLabel}>Reference</Text>
+            <Text style={styles.infoValueDark}>{item.reference}</Text>
           </View>
         </View>
 
@@ -333,46 +363,39 @@ const SupplyInfoScreen = ({ navigation }) => {
         </View>
 
         {/* Filters Row */}
-        <View style={styles.filterRow}>
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              statusFilter === 'Delivered' && styles.filterChipActive,
-            ]}
-            onPress={() =>
-              setStatusFilter(statusFilter === 'Delivered' ? 'All' : 'Delivered')
-            }
-          >
-            <Text
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+        >
+          {[
+            'Not Start Yet',
+            'Booked',
+            'In Transit',
+            'Arrived At OPS Facility',
+            'Out-for-Delivery',
+            'Delivered',
+          ].map(status => (
+            <TouchableOpacity
+              key={status}
               style={[
-                styles.filterChipText,
-                statusFilter === 'Delivered' && styles.filterChipTextActive,
+                styles.filterChip,
+                statusFilter === status && styles.filterChipActive,
               ]}
+              onPress={() =>
+                setStatusFilter(statusFilter === status ? 'All' : status)
+              }
             >
-              Delivered
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              statusFilter === 'In Transit' && styles.filterChipActive,
-            ]}
-            onPress={() =>
-              setStatusFilter(
-                statusFilter === 'In Transit' ? 'All' : 'In Transit',
-              )
-            }
-          >
-            <Text
-              style={[
-                styles.filterChipText,
-                statusFilter === 'In Transit' && styles.filterChipTextActive,
-              ]}
-            >
-              In Transit
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.filterChipText,
+                  statusFilter === status && styles.filterChipTextActive,
+                ]}
+              >
+                {status}
+              </Text>
+            </TouchableOpacity>
+          ))}
 
           <TouchableOpacity
             style={styles.clearFilterBtn}
@@ -384,7 +407,7 @@ const SupplyInfoScreen = ({ navigation }) => {
             <Icon name="refresh-outline" size={14} color="#64748b" />
             <Text style={styles.clearFilterText}>Clear</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       </View>
 
       {isLoading && shipments.length === 0 ? (
@@ -487,8 +510,8 @@ const getStyles = theme =>
     filterRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
       marginTop: 12,
+      paddingRight: 16,
     },
     filterChip: {
       paddingHorizontal: 12,
@@ -497,6 +520,7 @@ const getStyles = theme =>
       borderWidth: 1,
       borderColor: theme.colors.border,
       backgroundColor: theme.colors.background,
+      marginRight: 10,
     },
     filterChipActive: {
       backgroundColor: theme.colors.primary,

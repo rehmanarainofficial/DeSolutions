@@ -1,5 +1,3 @@
-import { useState, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -10,9 +8,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@config/useTheme';
-import { useGetDailyWorkingPlanMutation } from '@api/baseApi';
-import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '@store/slices/authSlice';
 
 const orderActions = [
   {
@@ -80,34 +75,6 @@ const SaleManagementScreen = ({ navigation }) => {
   const { theme } = useTheme();
   const styles = getStyles(theme);
 
-  const user = useSelector(selectCurrentUser);
-  const [dailyPlans, setDailyPlans] = useState([]);
-  const [getDailyWorkingPlan] = useGetDailyWorkingPlanMutation();
-
-  const fetchDailyPlan = async () => {
-    try {
-      const d = new Date();
-      const dateStr = d.toISOString().split('T')[0];
-      const response = await getDailyWorkingPlan({
-        user_id: user?.id,
-        date: dateStr,
-      }).unwrap();
-      if (response && String(response.status) === 'true') {
-        setDailyPlans(response.data || []);
-      } else {
-        setDailyPlans([]);
-      }
-    } catch (error) {
-      console.log('Fetch Plan Error:', error);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchDailyPlan();
-    }, []),
-  );
-
   const handleActionPress = item => {
     if (item.id === 'new_order') {
       navigation.navigate('SalesGenerateOrderScreen');
@@ -140,7 +107,11 @@ const SaleManagementScreen = ({ navigation }) => {
             style={styles.topActionCard}
             onPress={() => navigation.navigate('HCMAttendance')}
           >
-            <Icon name="calendar-number" size={24} color={theme.colors.primary} />
+            <Icon
+              name="calendar-number"
+              size={24}
+              color={theme.colors.primary}
+            />
             <Text style={styles.topActionTitle}>Mark{'\n'}Attendance</Text>
           </TouchableOpacity>
 
@@ -166,7 +137,11 @@ const SaleManagementScreen = ({ navigation }) => {
               })
             }
           >
-            <Icon name="trending-up-outline" size={24} color={theme.colors.primary} />
+            <Icon
+              name="trending-up-outline"
+              size={24}
+              color={theme.colors.primary}
+            />
             <Text style={styles.topActionTitle}>TODAYS{'\n'}PROGRESS</Text>
           </TouchableOpacity>
         </View>

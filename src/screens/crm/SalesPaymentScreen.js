@@ -114,7 +114,7 @@ const SalesPaymentScreen = ({ navigation, route }) => {
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
-    return `${year}-${month}-${day}`;
+    return `${day}-${month}-${year}`;
   };
 
   const handlePickImage = () => {
@@ -290,7 +290,7 @@ const SalesPaymentScreen = ({ navigation, route }) => {
             >
               <TextInput
                 style={[styles.input, { color: theme.colors.text }]}
-                placeholder="Cheque no"
+                placeholder="Cheque Slash / Slip No"
                 placeholderTextColor={theme.colors.textSecondary}
                 value={chequeNo}
                 onChangeText={setChequeNo}

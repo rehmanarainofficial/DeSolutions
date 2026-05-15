@@ -185,9 +185,6 @@ export const generateAndShareOrderChallanPDF = async (
                 <div class="header-row">
                   <div>
                     <div class="logo">${companyName}</div>
-                    <div style="margin-top: 10px; width: 300px; white-space: pre-wrap;">${companyAddress}</div>
-                    <div style="display: flex; margin-top: 5px;"><div style="width: 50px; font-style: italic;">Phone</div><div>${companyPhone}</div></div>
-                    <div style="display: flex;"><div style="width: 50px; font-style: italic;">Email</div><div style="color: blue;">${companyEmail}</div></div>
                   </div>
                   <div>
                     <div class="doc-type">SALES ORDER</div>
@@ -231,6 +228,16 @@ export const generateAndShareOrderChallanPDF = async (
           </thead>
           <tbody>
             ${rowsHtml}
+            <tr>
+              <td colspan="7" style="text-align: right; font-weight: bold; padding: 10px;">GRAND TOTAL</td>
+              <td style="text-align: right; font-weight: bold; padding: 10px;">${totalAmt.toLocaleString(
+                undefined,
+                {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 2,
+                },
+              )}</td>
+            </tr>
           </tbody>
         </table>
       </body>

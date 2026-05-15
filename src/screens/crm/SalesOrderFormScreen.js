@@ -332,19 +332,6 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
             iconName="git-branch-outline"
           />
 
-          {/* Select Shipper */}
-          <SearchableDropdown
-            label="Shipper"
-            placeholder="Select Shipper"
-            data={shippers}
-            selectedId={selectedShipperId}
-            onSelect={item => setSelectedShipperId(item.shipper_id)}
-            isLoading={shippersLoading}
-            idKey="shipper_id"
-            labelKey="shipper_name"
-            iconName="bus-outline"
-          />
-
           {/* Select Product */}
           <TouchableOpacity
             onPress={() => setProductModal(true)}
@@ -579,6 +566,18 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
             </Text>
           </TouchableOpacity>
 
+          {/* Select Shipper */}
+          <SearchableDropdown
+            label="Shipper"
+            placeholder="Select Shipper"
+            data={shippers}
+            selectedId={selectedShipperId}
+            onSelect={item => setSelectedShipperId(item.shipper_id)}
+            isLoading={shippersLoading}
+            idKey="shipper_id"
+            labelKey="shipper_name"
+            iconName="bus-outline"
+          />
           {/* Shipping Address */}
           <View
             style={[
