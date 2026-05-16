@@ -63,20 +63,20 @@ const CRMHospitalListScreen = ({ navigation }) => {
 
   const filteredHospitals = hospitals.filter(item => {
     const q = searchQuery.toLowerCase();
-    const hosp = (item.hosp_1 || '').toLowerCase();
+    const name = (item.hospital_name || '').toLowerCase();
     const city = (item.city_name || '').toLowerCase();
-    const dept = (item.department_name || '').toLowerCase();
+    const segment = (item.segment || '').toLowerCase();
     const contact = (item.person_name || '').toLowerCase();
     const cell = (item.cell_no || '').toLowerCase();
-    const specialty = (item.surgery || '').toLowerCase();
+    const custType = (item.cust_type || '').toLowerCase();
 
     return (
-      hosp.includes(q) ||
+      name.includes(q) ||
       city.includes(q) ||
-      dept.includes(q) ||
+      segment.includes(q) ||
       contact.includes(q) ||
       cell.includes(q) ||
-      specialty.includes(q)
+      custType.includes(q)
     );
   });
 
@@ -115,24 +115,36 @@ const CRMHospitalListScreen = ({ navigation }) => {
         </View>
         <View style={styles.headerInfo}>
           <Text style={[styles.nameText, { color: theme.colors.text }]}>
-            {cleanText(item.hosp_1)}
+            {cleanText(item.hospital_name)}
           </Text>
-          <Text style={[styles.cityText, { color: theme.colors.textSecondary }]}>
+          <Text
+            style={[styles.cityText, { color: theme.colors.textSecondary }]}
+          >
             <Icon name="location-outline" size={12} /> {item.city_name}
           </Text>
         </View>
       </View>
 
-      <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+      <View
+        style={[styles.divider, { backgroundColor: theme.colors.border }]}
+      />
 
       <View style={styles.cardBody}>
         <View style={styles.row}>
-          {renderKeyValue('Primary Contact', item.person_name)}
-          {renderKeyValue('Contact No', item.cell_no)}
+          {renderKeyValue('Segment', item.segment)}
+          {renderKeyValue('Status', item.customer_status)}
         </View>
         <View style={styles.row}>
-          {renderKeyValue('Department', item.department_name)}
-          {renderKeyValue('Specialty', item.surgery)}
+          {renderKeyValue('Primary Contact', item.person_name || 'N/A')}
+          {renderKeyValue('Contact No', item.cell_no || 'N/A')}
+        </View>
+        <View style={styles.row}>
+          {renderKeyValue('Beds', item.beds)}
+          {renderKeyValue('OTs', item.ots)}
+        </View>
+        <View style={styles.row}>
+          {renderKeyValue('Sales Person', item.sales_person)}
+          {renderKeyValue('Type', item.cust_type)}
         </View>
 
         <View style={styles.fullWidthCol}>
@@ -143,6 +155,24 @@ const CRMHospitalListScreen = ({ navigation }) => {
             {item.address || 'N/A'}
           </Text>
         </View>
+
+        {item.competitor_analysis && (
+          <View style={[styles.fullWidthCol, { marginTop: 8 }]}>
+            <Text
+              style={[styles.keyText, { color: theme.colors.textSecondary }]}
+            >
+              Competitor Analysis
+            </Text>
+            <Text
+              style={[
+                styles.valueText,
+                { color: theme.colors.text, fontSize: 12 },
+              ]}
+            >
+              {cleanText(item.competitor_analysis)}
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -192,7 +222,7 @@ const CRMHospitalListScreen = ({ navigation }) => {
       ) : (
         <FlatList
           data={filteredHospitals}
-          keyExtractor={(item, index) => item.contact_id || index.toString()}
+          keyExtractor={(item, index) => item.debtor_no || index.toString()}
           renderItem={renderHospitalCard}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}

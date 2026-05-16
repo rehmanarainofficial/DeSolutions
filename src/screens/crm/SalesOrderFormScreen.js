@@ -107,6 +107,7 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
 
   const fetchProducts = async () => {
     const customer = route.params?.customer || {};
+
     try {
       const response = await getStockMaster({
         company: user?.company_user_code || company,
@@ -217,11 +218,11 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
         ord_date: formatDate(new Date()),
         po_no: poNo,
         po_date: formatDate(poDate),
-        loc_code: selectedBranch,
+        loc_code: customer.loc_code || '',
         branch_code: selectedBranch,
         total: String(grandTotal),
         price_list: customer.price_list || '',
-        ship_via: selectedShipperId || customer.ship_via || '',
+        ship_via: selectedShipperId || '',
         memo: '',
         purch_order_details: JSON.stringify(purch_order_details),
         user_id: user?.company_user_id || '',
@@ -229,7 +230,7 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
         company: user?.company_user_code || '',
         image: picture,
         salesman: customer.salesman || '',
-        payments: customer.payments || customer.payment_terms || '',
+        payments: customer.payments || '',
       };
       const response = await postOrder(payload).unwrap();
 
@@ -322,9 +323,6 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
             selectedId={selectedBranch}
             onSelect={item => {
               setSelectedBranch(item.branch_code);
-              if (item.br_address) {
-                setShippingAddress(item.br_address);
-              }
             }}
             isLoading={branchLoading}
             idKey="branch_code"

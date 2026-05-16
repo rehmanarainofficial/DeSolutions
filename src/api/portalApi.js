@@ -19,6 +19,9 @@ export const portalApi = baseApi.injectEndpoints({
     }),
     postServicePurchSale: builder.mutation({
       query: body => {
+        console.log('--- POST SERVICE PURCH SALE PAYLOAD ---');
+        console.log('Original Body:', body);
+
         const formData = new FormData();
         Object.keys(body).forEach(key => {
           if (key === 'image' && body[key]) {
@@ -28,16 +31,25 @@ export const portalApi = baseApi.injectEndpoints({
               name: body[key].fileName || 'image.jpg',
             });
           } else if (key === 'purch_order_details') {
-            formData.append(
-              key,
+            const details =
               typeof body[key] === 'string'
                 ? body[key]
-                : JSON.stringify(body[key]),
-            );
+                : JSON.stringify(body[key]);
+            formData.append(key, details);
           } else {
             formData.append(key, body[key]);
           }
         });
+
+        // Log FormData entries (for debugging multipart)
+        if (__DEV__) {
+          const debugData = {};
+          Object.keys(body).forEach(k => {
+            debugData[k] = body[k];
+          });
+          console.log('Submitting FormData with:', debugData);
+        }
+
         return {
           url: 'portal/post_service_purch_sale.php',
           method: 'POST',

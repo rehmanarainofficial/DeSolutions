@@ -86,11 +86,7 @@ const SalesOrderStatusScreen = () => {
       }).unwrap();
 
       if (response && String(response.status) === 'true') {
-        const dataWithStatus = (response.data || []).map((item, idx) => ({
-          ...item,
-          status: item.status || (idx % 2 === 0 ? 'APPROVED' : 'UNAPPROVED'),
-        }));
-        setOrders(dataWithStatus);
+        setOrders(response.data || []);
       }
     } catch (error) {
       console.log('Error fetching orders:', error);
@@ -129,8 +125,9 @@ const SalesOrderStatusScreen = () => {
 
   // Derived stats
   const totalOrders = orders.length;
-  const approvedCount = orders.filter(o => o.status === 'APPROVED').length;
-  const unapprovedCount = orders.filter(o => o.status === 'UNAPPROVED').length;
+  const readyCount = orders.filter(o => o.status === 'Ready For Dispatched').length;
+  const awaitedCount = orders.filter(o => o.status === 'Awaited Payment').length;
+  const unapprovedCount = orders.filter(o => o.status === 'Unapproved' || o.status === 'UnApproved').length;
 
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
@@ -258,36 +255,67 @@ const SalesOrderStatusScreen = () => {
         {/* Footer Area with Amount & Details Button Stacked */}
         <View style={styles.amountSection}>
           <View style={styles.amountContainer}>
-            <Text style={styles.amountLabel}>TOTAL AMOUNT</Text>
-            <Text style={styles.amountValue}>
-              {parseFloat(order.total || 0).toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-              })}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 15 }}>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={styles.amountLabel}>TOTAL AMOUNT</Text>
+                <Text style={styles.amountValue}>
+                  {parseFloat(order.total || 0).toLocaleString(undefined, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+
+              {order.status === 'Ready For Dispatched' && (
+                <>
+                  <View style={styles.vDivider} />
+                  <View style={{ alignItems: 'center' }}>
+                    <Text style={styles.amountLabel}>RECEIVED</Text>
+                    <Text style={[styles.amountValue, { color: theme.colors.success, fontSize: 18 }]}>
+                      {parseFloat(order.payment_received || 0).toLocaleString()}
+                    </Text>
+                  </View>
+                  <View style={styles.vDivider} />
+                  <View style={{ alignItems: 'center' }}>
+                    <Text style={styles.amountLabel}>REMAINING</Text>
+                    <Text style={[styles.amountValue, { color: theme.colors.error, fontSize: 18 }]}>
+                      {parseFloat(order.payment_reamining || 0).toLocaleString()}
+                    </Text>
+                  </View>
+                </>
+              )}
+            </View>
+            
+            <View style={[styles.statusBadge, { backgroundColor: order.status === 'Ready For Dispatched' ? '#dcfce7' : '#fee2e2', marginTop: 10 }]}>
+              <Text style={[styles.statusText, { color: order.status === 'Ready For Dispatched' ? '#166534' : '#991b1b' }]}>
+                {order.status}
+              </Text>
+            </View>
           </View>
 
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <TouchableOpacity
-              style={[
-                styles.viewDetailsBtn,
-                { backgroundColor: theme.colors.success },
-              ]}
-              onPress={() =>
-                navigation.navigate('SalesPayment', {
-                  customer: { name: order.customer },
-                  order_no: order.order_no,
-                })
-              }
-            >
-              <Icon
-                name="cash-outline"
-                size={16}
-                color="#FFFFFF"
-                style={{ marginRight: 6 }}
-              />
-              <Text style={styles.viewDetailsText}>Payment</Text>
-            </TouchableOpacity>
+            {(order.status !== 'Awaited Payment' && order.status !== 'Unapproved' && order.status !== 'UnApproved') && (
+              <TouchableOpacity
+                style={[
+                  styles.viewDetailsBtn,
+                  { backgroundColor: theme.colors.success },
+                ]}
+                onPress={() =>
+                  navigation.navigate('SalesPayment', {
+                    customer: { name: order.customer },
+                    order_no: order.order_no,
+                  })
+                }
+              >
+                <Icon
+                  name="cash-outline"
+                  size={16}
+                  color="#FFFFFF"
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.viewDetailsText}>Payment</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={styles.viewDetailsBtn}
@@ -357,18 +385,25 @@ const SalesOrderStatusScreen = () => {
             'ALL',
           )}
           {renderFilterButton(
+            'Ready For Dispatched',
+            readyCount,
+            'checkmark-done-circle',
+            theme.colors.success,
+            'Ready For Dispatched',
+          )}
+          {renderFilterButton(
             'Awaited Payment',
-            approvedCount,
+            awaitedCount,
             'hourglass-outline',
             theme.colors.warning,
-            'APPROVED',
+            'Awaited Payment',
           )}
           {renderFilterButton(
             'UnApproved',
             unapprovedCount,
             'warning',
             theme.colors.error,
-            'UNAPPROVED',
+            'Unapproved',
           )}
 
           <TouchableOpacity
@@ -627,6 +662,21 @@ const getStyles = theme =>
       marginTop: 16,
       color: theme.colors.textSecondary,
       fontSize: 14,
+    },
+    vDivider: {
+      width: 1,
+      height: 30,
+      backgroundColor: theme.colors.border,
+    },
+    statusBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    statusText: {
+      fontSize: 11,
+      fontWeight: '700',
+      textTransform: 'uppercase',
     },
   });
 

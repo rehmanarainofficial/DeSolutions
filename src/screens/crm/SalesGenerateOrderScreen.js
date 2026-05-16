@@ -246,7 +246,6 @@ const SalesGenerateOrderScreen = () => {
   const { theme } = useTheme();
   const user = useSelector(selectCurrentUser);
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [searchCriteria, setSearchCriteria] = React.useState('NAME'); // NAME, CITY
   const styles = getCardStyles(theme);
 
   const { data, isLoading, isFetching, refetch, error } =
@@ -290,20 +289,17 @@ const SalesGenerateOrderScreen = () => {
 
         return dataArray.filter(customer => {
           const query = searchQuery.toLowerCase();
-          if (searchCriteria === 'NAME') {
-            return (customer.name || '').toLowerCase().includes(query);
-          } else if (searchCriteria === 'CITY') {
-            return (customer.city || '').toLowerCase().includes(query);
-          }
-          return (customer.name || '').toLowerCase().includes(query) || 
-                 (customer.city || '').toLowerCase().includes(query);
+          const matchesName = (customer.name || '').toLowerCase().includes(query);
+          const matchesCity = (customer.city || '').toLowerCase().includes(query);
+          
+          return matchesName || matchesCity;
         });
       }
     } catch (e) {
       console.log('Error parsing data:', e);
     }
     return [];
-  }, [data, searchQuery, searchCriteria]);
+  }, [data, searchQuery]);
 
   return (
     <SafeAreaView
@@ -348,7 +344,7 @@ const SalesGenerateOrderScreen = () => {
               <Icon name="search" size={20} color={theme.colors.textSecondary} />
               <TextInput
                 style={styles.searchInput}
-                placeholder={`Search by ${searchCriteria.toLowerCase()}...`}
+                placeholder="Search by Name or City..."
                 placeholderTextColor={theme.colors.textSecondary}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -358,23 +354,6 @@ const SalesGenerateOrderScreen = () => {
                   <Icon name="close-circle" size={20} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
               )}
-            </View>
-            <View style={styles.criteriaContainer}>
-              {['NAME', 'CITY'].map((criteria) => (
-                <TouchableOpacity
-                  key={criteria}
-                  style={[
-                    styles.criteriaChip,
-                    searchCriteria === criteria && styles.activeCriteriaChip
-                  ]}
-                  onPress={() => setSearchCriteria(criteria)}
-                >
-                  <Text style={[
-                    styles.criteriaText,
-                    searchCriteria === criteria && styles.activeCriteriaText
-                  ]}>{criteria}</Text>
-                </TouchableOpacity>
-              ))}
             </View>
           </View>
 

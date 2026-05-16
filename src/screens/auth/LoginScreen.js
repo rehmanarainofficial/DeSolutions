@@ -97,9 +97,9 @@ const LoginScreen = ({ navigation }) => {
       }).unwrap();
 
       dispatch(
-        setCredentials({ 
-          user: result.user, 
-          company: result.user.company_user_code || formData.company 
+        setCredentials({
+          user: result.user,
+          company: result.user.company_user_code || formData.company,
         }),
       );
     } catch (error) {
@@ -176,8 +176,6 @@ const LoginScreen = ({ navigation }) => {
                   onSubmitEditing={handleLogin}
                 />
 
-
-
                 <CustomButton
                   title="Sign In"
                   onPress={handleLogin}
@@ -192,7 +190,7 @@ const LoginScreen = ({ navigation }) => {
             {/* Footer Links - Outside innerContainer to push to bottom if space allows */}
             <View style={dynamicStyles.footer}>
               <AnimatedTypingText
-                text="Powered by Desolutions"
+                text="Powered by Kmivo"
                 style={[
                   dynamicStyles.footerText,
                   { color: theme.colors.textSecondary },

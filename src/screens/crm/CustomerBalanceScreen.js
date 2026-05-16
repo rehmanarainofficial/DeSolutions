@@ -63,7 +63,9 @@ const CustomerBalanceRow = ({ item, theme }) => {
         <Text style={styles.balanceLabel}>
           Outstanding:{' '}
           <Text style={styles.balanceValueGreen}>
-            {parseFloat(item.outstanding || 0).toLocaleString(undefined, {
+            {parseFloat(
+              String(item.outstanding || 0).replace(/,/g, ''),
+            ).toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -177,11 +179,13 @@ const CustomerBalanceScreen = () => {
 
   const totalCustomers = customerData.length;
   const totalDue = customerData.reduce(
-    (acc, curr) => acc + parseFloat(curr.due || 0),
+    (acc, curr) =>
+      acc + parseFloat(String(curr.due || 0).replace(/,/g, '')),
     0,
   );
   const totalOutstanding = customerData.reduce(
-    (acc, curr) => acc + parseFloat(curr.outstanding || 0),
+    (acc, curr) =>
+      acc + parseFloat(String(curr.outstanding || 0).replace(/,/g, '')),
     0,
   );
 

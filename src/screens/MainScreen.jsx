@@ -298,7 +298,7 @@ const MainScreen = ({ navigation }) => {
                   ? selectedMenuCompany.length > 12
                     ? selectedMenuCompany.slice(0, 12) + '...'
                     : selectedMenuCompany
-                  : 'Anwar & Sons'}
+                  : 'Kmivo'}
               </Text>
             </View>
             <View style={dynamicStyles.headerActions}>
@@ -335,7 +335,7 @@ const MainScreen = ({ navigation }) => {
 
           <View style={dynamicStyles.userInfoContainer}>
             <Text style={dynamicStyles.userName}>
-              Welcome back, {user?.real_name || 'User'}
+              Welcome back, {user?.user_id || 'User'}
             </Text>
           </View>
         </SafeAreaView>
