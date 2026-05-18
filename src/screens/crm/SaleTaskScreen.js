@@ -37,7 +37,9 @@ const SaleTaskScreen = ({ navigation, route }) => {
   const styles = getStyles(theme);
   const user = useSelector(state => state.auth.user);
 
-  const [activeTab, setActiveTab] = useState(route.params?.initialTab || 'plan'); // 'plan' or 'progress'
+  const [activeTab, setActiveTab] = useState(
+    route.params?.initialTab || 'plan',
+  ); // 'plan' or 'progress'
 
   useEffect(() => {
     if (route.params?.initialTab) {
@@ -56,6 +58,7 @@ const SaleTaskScreen = ({ navigation, route }) => {
   const [selectedProgressStatusId, setSelectedProgressStatusId] =
     useState(null);
   const [eveningRemarks, setEveningRemarks] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Delete Modal States
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
@@ -144,13 +147,14 @@ const SaleTaskScreen = ({ navigation, route }) => {
       const response = await addDailyWorkingPlan({
         id: '0',
         user_id: user?.id,
+        code: user?.emp_code,
         activity_date: getCurrentDate(),
         category: selectedCategory,
         activity: selectedActivity,
         hospital_name: selectedHospital,
         contact_person: selectedContact,
         created_by: user?.id,
-        progress_status: '1',
+        progress_status: '0',
       }).unwrap();
 
       if (String(response.status) === 'true') {
@@ -236,6 +240,7 @@ const SaleTaskScreen = ({ navigation, route }) => {
       return;
     }
 
+    setIsUpdating(true);
     try {
       const hasPermission = await requestLocationPermission();
       let lat = '';
@@ -277,6 +282,7 @@ const SaleTaskScreen = ({ navigation, route }) => {
         }
       } else {
         console.log('Location permission denied, proceeding without location');
+        setIsUpdating(false);
         Alert.alert(
           'Permission Required',
           'Please enable location permissions in your settings to update tasks.',
@@ -287,6 +293,7 @@ const SaleTaskScreen = ({ navigation, route }) => {
         );
         return;
       }
+
 
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
@@ -304,7 +311,7 @@ const SaleTaskScreen = ({ navigation, route }) => {
         activity: selectedStatusObj?.description || '',
         activity_id: selectedProgressStatusId,
         evening_remarks: eveningRemarks,
-        activity_date: selectedTask.activity_date,
+        activity_date: getCurrentDate(),
         category: selectedTask.category,
         hospital_name: selectedTask.hospital_name,
         contact_person: selectedTask.contact_person,
@@ -338,6 +345,8 @@ const SaleTaskScreen = ({ navigation, route }) => {
         text1: 'Error',
         text2: 'An unexpected error occurred.',
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -455,12 +464,12 @@ const SaleTaskScreen = ({ navigation, route }) => {
               style={[
                 styles.infoText,
                 {
-                  color: item.progress_status === '1' ? '#f59e0b' : '#10b981',
+                  color: item.progress_status === '0' ? '#f59e0b' : '#10b981',
                   fontWeight: '800',
                 },
               ]}
             >
-              {item.progress_status === '1' ? 'Pending' : 'Completed'}
+              {item.progress_status === '0' ? 'Pending' : (item.progress_name || 'Completed')}
             </Text>
           </View>
 
@@ -694,7 +703,7 @@ const SaleTaskScreen = ({ navigation, route }) => {
                 <CustomButton
                   title="UPDATE STATUS"
                   onPress={handleUpdateTask}
-                  loading={addLoading}
+                  loading={isUpdating}
                   icon="refresh-outline"
                 />
               </View>

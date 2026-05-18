@@ -15,7 +15,6 @@ import { useSelector } from 'react-redux';
 import { useTheme } from '@config/useTheme';
 import Modal from 'react-native-modal';
 import Geolocation from 'react-native-geolocation-service';
-import * as geolib from 'geolib';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { CustomButton } from '@components/common';
 import {
@@ -28,14 +27,15 @@ const { width } = Dimensions.get('window');
 const AttendanceScreen = () => {
   const { theme } = useTheme();
   const userData = useSelector(state => state.auth.user);
-  
+
   // Modals Visibility
   const [isDVRModalVisible, setDVRModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentLocationCoords, setCurrentLocationCoords] = useState(null);
   const [attendanceHistory, setAttendanceHistory] = useState([]);
-  
-  const [getAttendanceDetail, { isLoading: isFetching }] = useGetAttendanceDetailMutation();
+
+  const [getAttendanceDetail, { isLoading: isFetching }] =
+    useGetAttendanceDetailMutation();
   const [postAttendanceMutation] = usePostAttendanceMutation();
 
   // Unified Feedback State
@@ -74,10 +74,10 @@ const AttendanceScreen = () => {
     const currentDateStr = new Date().toISOString().split('T')[0];
     try {
       const response = await getAttendanceDetail({
-        emp_code: userData?.emp_code || '10001',
+        emp_code: userData?.emp_code || '',
         date: currentDateStr,
       }).unwrap();
-      
+
       if (response.status === 'true' || response.status === true) {
         setAttendanceHistory(response.data || []);
       }
@@ -302,10 +302,10 @@ const AttendanceScreen = () => {
       <TextInput
         style={[
           styles.input,
-          { 
-            borderColor: theme.colors.border, 
+          {
+            borderColor: theme.colors.border,
             backgroundColor: theme.colors.surface,
-            color: theme.colors.text 
+            color: theme.colors.text,
           },
           isMulti && { height: 80, textAlignVertical: 'top' },
         ]}
@@ -319,7 +319,9 @@ const AttendanceScreen = () => {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
         refreshControl={
@@ -328,31 +330,63 @@ const AttendanceScreen = () => {
             onRefresh={fetchHistory}
             colors={[theme.colors.primary]}
           />
-        }>
+        }
+      >
         {/* Employee Info Card */}
-        <View style={[styles.infoCard, { backgroundColor: theme.colors.surface }]}>
+        <View
+          style={[styles.infoCard, { backgroundColor: theme.colors.surface }]}
+        >
           <Text style={[styles.userName, { color: theme.colors.primary }]}>
             {userData?.real_name || 'User'}
           </Text>
           <Text style={[styles.empCode, { color: theme.colors.textSecondary }]}>
             Employee Code: {userData?.emp_code || 'N/A'}
           </Text>
-          <View style={[styles.monthBadge, { backgroundColor: theme.colors.primary }]}>
+          <View
+            style={[
+              styles.monthBadge,
+              { backgroundColor: theme.colors.primary },
+            ]}
+          >
             <Text style={styles.monthText}>
-              {`${now.toLocaleString('default', { month: 'long' })} ${currentYear}`}
+              {`${now.toLocaleString('default', {
+                month: 'long',
+              })} ${currentYear}`}
             </Text>
           </View>
         </View>
 
         {/* Calendar Grid */}
-        <View style={[styles.calendarContainer, { backgroundColor: theme.colors.surface }]}>
-          <View style={[styles.calendarHeader, { borderBottomColor: theme.colors.border }]}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>
+        <View
+          style={[
+            styles.calendarContainer,
+            { backgroundColor: theme.colors.surface },
+          ]}
+        >
+          <View
+            style={[
+              styles.calendarHeader,
+              { borderBottomColor: theme.colors.border },
+            ]}
+          >
+            <Text
+              style={[styles.sectionTitle, { color: theme.colors.primary }]}
+            >
               Daily Attendance
             </Text>
             <View style={styles.todayIndicator}>
-              <View style={[styles.todayDot, { backgroundColor: theme.colors.primary }]} />
-              <Text style={[styles.todayText, { color: theme.colors.textSecondary }]}>
+              <View
+                style={[
+                  styles.todayDot,
+                  { backgroundColor: theme.colors.primary },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.todayText,
+                  { color: theme.colors.textSecondary },
+                ]}
+              >
                 Today
               </Text>
             </View>
@@ -372,14 +406,33 @@ const AttendanceScreen = () => {
                   style={[
                     styles.dayButton,
                     { borderColor: theme.colors.border },
-                    isToday && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary, transform: [{scale: 1.1}], zIndex: 1, elevation: 4 },
+                    isToday && {
+                      backgroundColor: theme.colors.primary,
+                      borderColor: theme.colors.primary,
+                      transform: [{ scale: 1.1 }],
+                      zIndex: 1,
+                      elevation: 4,
+                    },
                     isPast && { backgroundColor: theme.colors.surface + '80' },
-                    !isToday && !isPast && { backgroundColor: theme.colors.background, opacity: 0.5 },
-                  ]}>
-                  <Text style={[
-                    styles.dayText,
-                    { color: isToday ? '#FFFFFF' : isPast ? theme.colors.text : theme.colors.border }
-                  ]}>
+                    !isToday &&
+                      !isPast && {
+                        backgroundColor: theme.colors.background,
+                        opacity: 0.5,
+                      },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.dayText,
+                      {
+                        color: isToday
+                          ? '#FFFFFF'
+                          : isPast
+                          ? theme.colors.text
+                          : theme.colors.border,
+                      },
+                    ]}
+                  >
                     {day}
                   </Text>
                   {isToday && <View style={styles.activeIndicator} />}
@@ -391,12 +444,25 @@ const AttendanceScreen = () => {
 
         {/* Attendance History */}
         <View style={styles.historySection}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text, marginBottom: 15 }]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: theme.colors.text, marginBottom: 15 },
+            ]}
+          >
             Today's Logs
           </Text>
-          
+
           {attendanceHistory.length === 0 ? (
-            <View style={[styles.emptyContainer, { borderColor: theme.colors.border, backgroundColor: theme.colors.surface }]}>
+            <View
+              style={[
+                styles.emptyContainer,
+                {
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.surface,
+                },
+              ]}
+            >
               <Text style={{ color: theme.colors.textSecondary }}>
                 No records found for today.
               </Text>
@@ -405,18 +471,42 @@ const AttendanceScreen = () => {
             attendanceHistory.map((item, index) => {
               const isOutValue = item.status === '1' || item.status === 1;
               return (
-                <View key={index} style={[styles.historyCard, { backgroundColor: theme.colors.surface }]}>
-                  <View style={[styles.cardHeader, { borderBottomColor: theme.colors.border }]}>
+                <View
+                  key={index}
+                  style={[
+                    styles.historyCard,
+                    { backgroundColor: theme.colors.surface },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.cardHeader,
+                      { borderBottomColor: theme.colors.border },
+                    ]}
+                  >
                     <View style={styles.timeBadge}>
-                      <Icon name="time-outline" size={14} color={theme.colors.primary} />
-                      <Text style={[styles.timeText, { color: theme.colors.primary }]}>
+                      <Icon
+                        name="time-outline"
+                        size={14}
+                        color={theme.colors.primary}
+                      />
+                      <Text
+                        style={[
+                          styles.timeText,
+                          { color: theme.colors.primary },
+                        ]}
+                      >
                         {formatTime12h(item.ActivityTime)}
                       </Text>
                     </View>
                     {!isOutValue && (
                       <TouchableOpacity
-                        style={[styles.outButton, { backgroundColor: theme.colors.secondary }]}
-                        onPress={() => handleCheckOut(item.id)}>
+                        style={[
+                          styles.outButton,
+                          { backgroundColor: theme.colors.secondary },
+                        ]}
+                        onPress={() => handleCheckOut(item.id)}
+                      >
                         <Text style={styles.outBtnText}>Checkout</Text>
                       </TouchableOpacity>
                     )}
@@ -429,20 +519,45 @@ const AttendanceScreen = () => {
 
                   <View style={styles.cardBody}>
                     <View style={styles.detailItem}>
-                      <Icon name="location-outline" size={16} color={theme.colors.secondary} style={styles.detailIcon} />
+                      <Icon
+                        name="location-outline"
+                        size={16}
+                        color={theme.colors.secondary}
+                        style={styles.detailIcon}
+                      />
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.detailTitle, { color: theme.colors.text }]}>
+                        <Text
+                          style={[
+                            styles.detailTitle,
+                            { color: theme.colors.text },
+                          ]}
+                        >
                           {item.site_name || 'Office Entry'}
                         </Text>
-                        <Text style={[styles.detailSubtitle, { color: theme.colors.textSecondary }]}>
+                        <Text
+                          style={[
+                            styles.detailSubtitle,
+                            { color: theme.colors.textSecondary },
+                          ]}
+                        >
                           {item.current_location || 'N/A'}
                         </Text>
                       </View>
                     </View>
                     {item.nature_of_visit && (
                       <View style={[styles.detailItem, { marginTop: 8 }]}>
-                        <Icon name="information-circle-outline" size={16} color={theme.colors.textSecondary} style={styles.detailIcon} />
-                        <Text style={[styles.detailSubtitle, { color: theme.colors.text, flex: 1 }]}>
+                        <Icon
+                          name="information-circle-outline"
+                          size={16}
+                          color={theme.colors.textSecondary}
+                          style={styles.detailIcon}
+                        />
+                        <Text
+                          style={[
+                            styles.detailSubtitle,
+                            { color: theme.colors.text, flex: 1 },
+                          ]}
+                        >
                           {item.nature_of_visit}
                         </Text>
                       </View>
@@ -459,26 +574,52 @@ const AttendanceScreen = () => {
       <Modal
         isVisible={isDVRModalVisible}
         onBackdropPress={() => !loading && setDVRModalVisible(false)}
-        style={styles.modal}>
-        <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
+        style={styles.modal}
+      >
+        <View
+          style={[
+            styles.modalContent,
+            { backgroundColor: theme.colors.background },
+          ]}
+        >
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: theme.colors.primary }]}>
               Daily Visit Report (DVR)
             </Text>
-            <TouchableOpacity onPress={() => !loading && setDVRModalVisible(false)}>
-              <Text style={{ color: theme.colors.secondary, fontWeight: 'bold' }}>Close</Text>
+            <TouchableOpacity
+              onPress={() => !loading && setDVRModalVisible(false)}
+            >
+              <Text
+                style={{ color: theme.colors.secondary, fontWeight: 'bold' }}
+              >
+                Close
+              </Text>
             </TouchableOpacity>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-            <Text style={{ color: theme.colors.textSecondary, marginBottom: 15, fontSize: 13 }}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 40 }}
+          >
+            <Text
+              style={{
+                color: theme.colors.textSecondary,
+                marginBottom: 15,
+                fontSize: 13,
+              }}
+            >
               You are out of range. Please submit DVR to mark attendance.
             </Text>
             {renderInput('Company Name', 'site_name', 'Enter company name')}
             {renderInput('Site Address', 'site_address', 'Enter site address')}
             {renderInput('Contact Person', 'contact_person', 'Enter name')}
             {renderInput('Mobile No', 'mobile_no', 'Enter mobile number')}
-            {renderInput('Nature of Visit', 'nature_of_visit', 'Describe visit', true)}
-            
+            {renderInput(
+              'Nature of Visit',
+              'nature_of_visit',
+              'Describe visit',
+              true,
+            )}
+
             <CustomButton
               title={loading ? 'Submitting...' : 'Submit & Mark Attendance'}
               onPress={submitDVR}
@@ -494,11 +635,21 @@ const AttendanceScreen = () => {
         isVisible={feedback.visible}
         onBackdropPress={() => setFeedback({ ...feedback, visible: false })}
         animationIn="zoomIn"
-        animationOut="zoomOut">
-        <View style={[styles.successModalContent, { backgroundColor: theme.colors.surface }]}>
+        animationOut="zoomOut"
+      >
+        <View
+          style={[
+            styles.successModalContent,
+            { backgroundColor: theme.colors.surface },
+          ]}
+        >
           <View style={styles.successIconContainer}>
             <Icon
-              name={feedback.type === 'success' ? 'checkmark-circle' : 'close-circle'}
+              name={
+                feedback.type === 'success'
+                  ? 'checkmark-circle'
+                  : 'close-circle'
+              }
               size={80}
               color={feedback.type === 'success' ? '#28A745' : '#DC3545'}
             />
@@ -506,16 +657,31 @@ const AttendanceScreen = () => {
           <Text style={[styles.feedbackTitle, { color: theme.colors.text }]}>
             {feedback.title}
           </Text>
-          <Text style={[styles.feedbackMessage, { color: theme.colors.textSecondary }]}>
+          <Text
+            style={[
+              styles.feedbackMessage,
+              { color: theme.colors.textSecondary },
+            ]}
+          >
             {feedback.message}
           </Text>
           <TouchableOpacity
             style={[
               styles.successButton,
-              { backgroundColor: feedback.type === 'success' ? theme.colors.primary : '#DC3545' },
+              {
+                backgroundColor:
+                  feedback.type === 'success'
+                    ? theme.colors.primary
+                    : '#DC3545',
+              },
             ]}
-            onPress={() => setFeedback({ ...feedback, visible: false })}>
-            <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}>Close</Text>
+            onPress={() => setFeedback({ ...feedback, visible: false })}
+          >
+            <Text
+              style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 }}
+            >
+              Close
+            </Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -523,7 +689,9 @@ const AttendanceScreen = () => {
       {/* Loading Overlay */}
       {loading && (
         <View style={styles.loadingOverlay}>
-          <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Processing...</Text>
+          <Text style={{ color: '#FFFFFF', fontWeight: 'bold' }}>
+            Processing...
+          </Text>
         </View>
       )}
     </View>
@@ -574,7 +742,11 @@ const styles = StyleSheet.create({
   todayIndicator: { flexDirection: 'row', alignItems: 'center' },
   todayDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
   todayText: { fontSize: 12 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+  },
   dayButton: {
     width: (width - 70) / 7,
     height: (width - 70) / 7,
@@ -681,7 +853,12 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
   },
   feedbackTitle: { fontSize: 22, fontWeight: 'bold', marginTop: 15 },
-  feedbackMessage: { fontSize: 14, textAlign: 'center', marginTop: 10, paddingHorizontal: 20 },
+  feedbackMessage: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 10,
+    paddingHorizontal: 20,
+  },
   successButton: {
     paddingHorizontal: 40,
     paddingVertical: 12,

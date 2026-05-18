@@ -97,7 +97,12 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
           person_id: personId,
         }).unwrap();
         if (response && String(response.status) === 'true') {
-          setBranches(response.data || []);
+          const fetchedBranches = response.data || [];
+          setBranches(fetchedBranches);
+          
+          if (fetchedBranches.length > 0) {
+            setSelectedBranch(fetchedBranches[0].branch_code);
+          }
         }
       } catch (error) {
         console.log('Error fetching branches:', error);
@@ -181,12 +186,28 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
   };
 
   const confirmOrder = async () => {
-    if (cart.length === 0) {
-      Toast.show({ type: 'error', text1: 'Cart is empty' });
+    if (!selectedBranch) {
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please Select a Branch' });
       return;
     }
-    if (!shippingAddress.trim()) {
-      Toast.show({ type: 'error', text1: 'Please enter shipping address' });
+    if (cart.length === 0) {
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Cart is empty. Please add items.' });
+      return;
+    }
+    if (!poNo || !poNo.trim()) {
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please enter PO No' });
+      return;
+    }
+    if (!selectedShipperId) {
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please Select a Shipper' });
+      return;
+    }
+    if (!shippingAddress || !shippingAddress.trim()) {
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please enter Shipping Address' });
+      return;
+    }
+    if (!picture) {
+      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please add an Attachment (Camera or Gallery)' });
       return;
     }
 
@@ -234,7 +255,7 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
       };
       const response = await postOrder(payload).unwrap();
 
-      if (response && response.status === true) {
+      if (response && String(response.status) === 'true') {
         setCart([]);
         setPicture(null);
         setPoNo('');

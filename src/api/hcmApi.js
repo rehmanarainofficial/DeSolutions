@@ -20,7 +20,7 @@ export const hcmApi = baseApi.injectEndpoints({
     postAttendance: builder.mutation({
       queryFn: async (body, api, extraOptions, baseQuery) => {
         const formData = new FormData();
-        
+
         formData.append('code', body.code || '');
         formData.append('ActivityDate', body.ActivityDate || '');
         formData.append('ActivityTime', body.ActivityTime || '');

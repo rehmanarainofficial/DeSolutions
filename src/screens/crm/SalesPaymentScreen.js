@@ -117,6 +117,14 @@ const SalesPaymentScreen = ({ navigation, route }) => {
     return `${day}-${month}-${year}`;
   };
 
+  const formatApiDate = d => {
+    if (!d) return '';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${year}-${month}-${day}`;
+  };
+
   const handlePickImage = () => {
     const options = {
       mediaType: 'photo',
@@ -183,10 +191,10 @@ const SalesPaymentScreen = ({ navigation, route }) => {
         company: user?.company_user_code,
         type: '2',
         comments: comments,
-        trans_date: formatDisplayDate(new Date()),
+        trans_date: formatApiDate(new Date()),
         amount: amount,
         cheque: chequeNo,
-        cheque_date: formatDisplayDate(date),
+        cheque_date: formatApiDate(date),
         bank_act: selectedBank.id,
         gl_detail: [
           {

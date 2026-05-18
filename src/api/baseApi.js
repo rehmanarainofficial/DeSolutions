@@ -164,15 +164,18 @@ export const baseApi = createApi({
         formData.append('activity', body.activity);
         formData.append('hospital_name', body.hospital_name);
         formData.append('contact_person', body.contact_person);
-        formData.append('progress_status', body.progress_status || '1');
+        formData.append(
+          'progress_status',
+          body.progress_status !== undefined ? body.progress_status : '0'
+        );
         formData.append('created_by', body.created_by);
         formData.append('evening_remarks', body.evening_remarks || '');
         formData.append('longitude', body.longitude || '');
         formData.append('latitude', body.latitude || '');
         formData.append('current_location', body.location_name || '');
         formData.append('ActivityTime', body.ActivityTime || '');
-        if (body.emp_code) {
-          formData.append('code', body.emp_code);
+        if (body.code) {
+          formData.append('code', body.code);
         }
 
         return {

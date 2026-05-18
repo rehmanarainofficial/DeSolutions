@@ -127,7 +127,7 @@ const SalesOrderStatusScreen = () => {
   const totalOrders = orders.length;
   const readyCount = orders.filter(o => o.status === 'Ready For Dispatched').length;
   const awaitedCount = orders.filter(o => o.status === 'Awaited Payment').length;
-  const unapprovedCount = orders.filter(o => o.status === 'Unapproved' || o.status === 'UnApproved').length;
+  const unapprovedCount = orders.filter(o => o.status === 'Un Approved' || o.status === 'Unapproved' || o.status === 'UnApproved').length;
 
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
@@ -266,7 +266,7 @@ const SalesOrderStatusScreen = () => {
                 </Text>
               </View>
 
-              {order.status === 'Ready For Dispatched' && (
+              {(order.status === 'Ready For Dispatched' || order.status === 'Awaited Payment') && (
                 <>
                   <View style={styles.vDivider} />
                   <View style={{ alignItems: 'center' }}>
@@ -286,15 +286,34 @@ const SalesOrderStatusScreen = () => {
               )}
             </View>
             
-            <View style={[styles.statusBadge, { backgroundColor: order.status === 'Ready For Dispatched' ? '#dcfce7' : '#fee2e2', marginTop: 10 }]}>
-              <Text style={[styles.statusText, { color: order.status === 'Ready For Dispatched' ? '#166534' : '#991b1b' }]}>
+            <View style={[
+              styles.statusBadge, 
+              { 
+                backgroundColor: order.status === 'Ready For Dispatched' 
+                  ? '#dcfce7' 
+                  : order.status === 'Awaited Payment'
+                    ? '#fef3c7'
+                    : '#fee2e2', 
+                marginTop: 10 
+              }
+            ]}>
+              <Text style={[
+                styles.statusText, 
+                { 
+                  color: order.status === 'Ready For Dispatched' 
+                    ? '#166534' 
+                    : order.status === 'Awaited Payment'
+                      ? '#b45309'
+                      : '#991b1b' 
+                }
+              ]}>
                 {order.status}
               </Text>
             </View>
           </View>
 
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            {(order.status !== 'Awaited Payment' && order.status !== 'Unapproved' && order.status !== 'UnApproved') && (
+            {order.status === 'Awaited Payment' && (
               <TouchableOpacity
                 style={[
                   styles.viewDetailsBtn,
@@ -399,11 +418,11 @@ const SalesOrderStatusScreen = () => {
             'Awaited Payment',
           )}
           {renderFilterButton(
-            'UnApproved',
+            'Un Approved',
             unapprovedCount,
             'warning',
             theme.colors.error,
-            'Unapproved',
+            'Un Approved',
           )}
 
           <TouchableOpacity
