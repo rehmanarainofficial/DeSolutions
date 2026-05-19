@@ -20,6 +20,7 @@ import {
   useGetStockMasterDropdownMutation,
   useGetCustBranchDropdownMutation,
   useGetShippersMutation,
+  useGetBranchAddressMutation,
 } from '@api/baseApi';
 import { CustomDatePicker, SearchableDropdown } from '@components/common';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
@@ -48,11 +49,14 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
   const [orderLoader, setOrderLoader] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [selectedShipperId, setSelectedShipperId] = useState(null);
+  const [branchAddresses, setBranchAddresses] = useState([]);
 
   const { company } = useSelector(state => state.auth);
 
   const user = useSelector(selectCurrentUser);
   const [getStockMaster] = useGetStockMasterDropdownMutation();
+  const [getBranchAddress, { isLoading: branchAddressLoading }] =
+    useGetBranchAddressMutation();
   const [postOrder] = usePostServicePurchSaleMutation();
   const [products, setProducts] = useState([]);
   const [branches, setBranches] = useState([]);
@@ -86,6 +90,26 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
     }
   };
 
+  const fetchBranchAddresses = async branchCode => {
+    try {
+      const response = await getBranchAddress({
+        company: user?.company_user_code || company,
+        branch_code: branchCode,
+      }).unwrap();
+      if (response && String(response.status) === 'true') {
+        const addresses = (response.data || [])
+          .map((addr, idx) => ({ ...addr, uniqueId: String(idx) }))
+          .filter(a => a.value_name && a.value_name.trim() !== '');
+        setBranchAddresses(addresses);
+      } else {
+        setBranchAddresses([]);
+      }
+    } catch (e) {
+      console.log('Error fetching branch addresses:', e);
+      setBranchAddresses([]);
+    }
+  };
+
   const fetchBranches = async () => {
     const customer = route.params?.customer || {};
     const personId = customer.person_id;
@@ -99,9 +123,10 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
         if (response && String(response.status) === 'true') {
           const fetchedBranches = response.data || [];
           setBranches(fetchedBranches);
-          
+
           if (fetchedBranches.length > 0) {
             setSelectedBranch(fetchedBranches[0].branch_code);
+            fetchBranchAddresses(fetchedBranches[0].branch_code);
           }
         }
       } catch (error) {
@@ -127,10 +152,34 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
   };
 
   // Derived Values
-  const grandTotal = cart.reduce(
+  const subTotal = cart.reduce(
     (sum, item) => sum + parseFloat(item.GrandTotal || 0),
     0,
   );
+
+  const customerTaxes = route.params?.customer?.taxes || [];
+  let calculatedTaxes = [];
+  let sumOfPreviousTaxes = 0;
+
+  customerTaxes.forEach((tax, index) => {
+    let rate = parseFloat(tax.tax_rate || 0);
+    let taxValue = 0;
+
+    if (index === customerTaxes.length - 1 && customerTaxes.length > 1) {
+      taxValue = sumOfPreviousTaxes * (rate / 100);
+    } else {
+      taxValue = subTotal * (rate / 100);
+      sumOfPreviousTaxes += taxValue;
+    }
+
+    calculatedTaxes.push({
+      ...tax,
+      calculatedValue: taxValue,
+    });
+  });
+
+  const finalGrandTotal =
+    subTotal + calculatedTaxes.reduce((sum, t) => sum + t.calculatedValue, 0);
 
   const handleQuantityChange = type => {
     if (type === 'plus') {
@@ -187,27 +236,43 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
 
   const confirmOrder = async () => {
     if (!selectedBranch) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please Select a Branch' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please Select a Branch',
+      });
       return;
     }
     if (cart.length === 0) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Cart is empty. Please add items.' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Cart is empty. Please add items.',
+      });
       return;
     }
     if (!poNo || !poNo.trim()) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please enter PO No' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please enter PO No',
+      });
       return;
     }
     if (!selectedShipperId) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please Select a Shipper' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please Select a Shipper',
+      });
       return;
     }
     if (!shippingAddress || !shippingAddress.trim()) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please enter Shipping Address' });
-      return;
-    }
-    if (!picture) {
-      Toast.show({ type: 'error', text1: 'Validation Error', text2: 'Please add an Attachment (Camera or Gallery)' });
+      Toast.show({
+        type: 'error',
+        text1: 'Validation Error',
+        text2: 'Please enter Shipping Address',
+      });
       return;
     }
 
@@ -241,7 +306,7 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
         po_date: formatDate(poDate),
         loc_code: customer.loc_code || '',
         branch_code: selectedBranch,
-        total: String(grandTotal),
+        total: String(finalGrandTotal),
         price_list: customer.price_list || '',
         ship_via: selectedShipperId || '',
         memo: '',
@@ -344,6 +409,7 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
             selectedId={selectedBranch}
             onSelect={item => {
               setSelectedBranch(item.branch_code);
+              fetchBranchAddresses(item.branch_code);
             }}
             isLoading={branchLoading}
             idKey="branch_code"
@@ -512,6 +578,60 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
                   { backgroundColor: theme.colors.border },
                 ]}
               />
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  marginBottom: 5,
+                }}
+              >
+                <Text
+                  style={[styles.label, { color: theme.colors.textSecondary }]}
+                >
+                  Sub Total
+                </Text>
+                <Text style={{ color: theme.colors.text }}>
+                  Rs {subTotal.toFixed(2)}
+                </Text>
+              </View>
+
+              {calculatedTaxes.length > 0 &&
+                calculatedTaxes.map((tax, index) => {
+                  if (tax.calculatedValue > 0) {
+                    return (
+                      <View
+                        key={index}
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          marginBottom: 5,
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.label,
+                            { color: theme.colors.textSecondary },
+                          ]}
+                        >
+                          {tax.tax_name} ({tax.tax_rate}%)
+                        </Text>
+                        <Text style={{ color: theme.colors.text }}>
+                          Rs {tax.calculatedValue.toFixed(2)}
+                        </Text>
+                      </View>
+                    );
+                  }
+                  return null;
+                })}
+
+              <View
+                style={[
+                  styles.divider,
+                  { backgroundColor: theme.colors.border },
+                ]}
+              />
+
               <View
                 style={{
                   flexDirection: 'row',
@@ -527,7 +647,7 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
                   Grand Total
                 </Text>
                 <Text style={{ color: theme.colors.text, fontWeight: '700' }}>
-                  Rs {grandTotal.toFixed(2)}
+                  Rs {finalGrandTotal.toFixed(2)}
                 </Text>
               </View>
             </View>
@@ -597,6 +717,25 @@ const SalesOrderFormScreen = ({ navigation, route }) => {
             labelKey="shipper_name"
             iconName="bus-outline"
           />
+
+          {/* Select Branch Address */}
+          {branchAddresses.length > 0 && (
+            <SearchableDropdown
+              label="Select Branch Address"
+              placeholder="Select Address to Auto-fill"
+              data={branchAddresses}
+              selectedId={null}
+              onSelect={item => {
+                if (item.value_name) {
+                  setShippingAddress(item.value_name);
+                }
+              }}
+              isLoading={branchAddressLoading}
+              idKey="uniqueId"
+              labelKey="value_name"
+              iconName="location-outline"
+            />
+          )}
           {/* Shipping Address */}
           <View
             style={[

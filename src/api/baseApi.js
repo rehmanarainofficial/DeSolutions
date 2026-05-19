@@ -281,6 +281,21 @@ export const baseApi = createApi({
         };
       },
     }),
+    getBranchAddress: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', body.company);
+        formData.append('branch_code', body.branch_code);
+        return {
+          url: 'dropdown/branch_address.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
   }),
 });
 
@@ -300,6 +315,7 @@ export const {
   useToggleErpStatusMutation,
   useGetBankNamesMutation,
   useGetShippersMutation,
+  useGetBranchAddressMutation,
 } = baseApi;
 
 export default baseApi;

@@ -22,26 +22,17 @@ const CRMAddHospitalScreen = ({ navigation }) => {
   const { theme } = useTheme();
   const styles = getStyles(theme);
 
-  const [activeTab, setActiveTab] = useState('Basic');
-
   // Basic Information State
   const [basicInfo, setBasicInfo] = useState({
     hospitalName: '',
     address: '',
     city: null,
-    website: '',
-    type1: null,
     segment: null,
     noOfOts: '',
     noOfBeds: '',
     status: null,
     customersType: null,
   });
-
-  // Dynamic States
-  const [facilities, setFacilities] = useState([{ facility1: null, facility2: null, facility3: null }]);
-  const [businessOps, setBusinessOps] = useState([{ fundingSource: null, paymentTerms: null, creditHistory: null, procurementChannel: null, wallet: null }]);
-  const [competitors, setCompetitors] = useState([{ sutures: null, airway: null }]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -53,21 +44,7 @@ const CRMAddHospitalScreen = ({ navigation }) => {
     setBasicInfo((prev) => ({ ...prev, [key]: value }));
   };
 
-  const updateDynamicField = (setState, index, key, value) => {
-    setState((prev) => {
-      const updated = [...prev];
-      updated[index][key] = value;
-      return updated;
-    });
-  };
 
-  const addDynamicRow = (setState, emptyRow) => {
-    setState((prev) => [...prev, emptyRow]);
-  };
-
-  const removeDynamicRow = (setState, index) => {
-    setState((prev) => prev.filter((_, i) => i !== index));
-  };
 
   // UI Helpers
   const renderInput = (label, value, onChangeText, keyboardType = 'default') => (
@@ -104,40 +81,7 @@ const CRMAddHospitalScreen = ({ navigation }) => {
     </View>
   );
 
-  // Render Tabs
-  const tabs = [
-    { key: 'Basic', label: 'Basic Info' },
-    { key: 'Facilities', label: 'Facilities' },
-    { key: 'Business', label: 'Business Opp.' },
-    { key: 'Competitor', label: 'Competitor' },
-  ];
 
-  const renderTabs = () => (
-    <View style={styles.tabContainer}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.key;
-          return (
-            <TouchableOpacity
-              key={tab.key}
-              style={[
-                styles.tabButton,
-                {
-                  backgroundColor: isActive ? theme.colors.primary : theme.colors.surface,
-                  borderColor: isActive ? theme.colors.primary : theme.colors.border,
-                },
-              ]}
-              onPress={() => setActiveTab(tab.key)}
-            >
-              <Text style={[styles.tabText, { color: isActive ? '#FFF' : theme.colors.textSecondary }]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
 
   // Tab Contents
   const renderBasicInfo = () => (
@@ -145,8 +89,6 @@ const CRMAddHospitalScreen = ({ navigation }) => {
       {renderInput('Hospital Name', basicInfo.hospitalName, (text) => updateBasicField('hospitalName', text))}
       {renderInput('Address', basicInfo.address, (text) => updateBasicField('address', text))}
       {renderDropdown('City', basicInfo.city, (val) => updateBasicField('city', val))}
-      {renderInput('Website', basicInfo.website, (text) => updateBasicField('website', text), 'url')}
-      {renderDropdown('Type 1', basicInfo.type1, (val) => updateBasicField('type1', val))}
       {renderDropdown('Segment', basicInfo.segment, (val) => updateBasicField('segment', val))}
       {renderInput('No. of OTs', basicInfo.noOfOts, (text) => updateBasicField('noOfOts', text), 'numeric')}
       {renderInput('No. of Beds', basicInfo.noOfBeds, (text) => updateBasicField('noOfBeds', text), 'numeric')}
@@ -155,98 +97,12 @@ const CRMAddHospitalScreen = ({ navigation }) => {
     </View>
   );
 
-  const renderFacilities = () => (
-    <View style={styles.formContent}>
-      {facilities.map((item, index) => (
-        <View key={index} style={[styles.dynamicRowBlock, { borderColor: theme.colors.border, backgroundColor: theme.colors.surface }]}>
-          <View style={styles.dynamicHeader}>
-            <Text style={[styles.dynamicTitle, { color: theme.colors.primary }]}>Facility Set {index + 1}</Text>
-            {facilities.length > 1 && (
-              <TouchableOpacity onPress={() => removeDynamicRow(setFacilities, index)}>
-                <Icon name="trash-outline" size={20} color={theme.colors.error} />
-              </TouchableOpacity>
-            )}
-          </View>
-          {renderDropdown('Surgical Facility 1', item.facility1, (val) => updateDynamicField(setFacilities, index, 'facility1', val))}
-          {renderDropdown('Surgical Facility 2', item.facility2, (val) => updateDynamicField(setFacilities, index, 'facility2', val))}
-          {renderDropdown('Surgical Facility 3', item.facility3, (val) => updateDynamicField(setFacilities, index, 'facility3', val))}
-        </View>
-      ))}
-      <TouchableOpacity 
-        style={[styles.addMoreBtn, { borderColor: theme.colors.primary }]}
-        onPress={() => addDynamicRow(setFacilities, { facility1: null, facility2: null, facility3: null })}
-      >
-        <Icon name="add" size={20} color={theme.colors.primary} style={{ marginRight: 8 }} />
-        <Text style={[styles.addMoreText, { color: theme.colors.primary }]}>Add More Facilities</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderBusinessOpp = () => (
-    <View style={styles.formContent}>
-      {businessOps.map((item, index) => (
-        <View key={index} style={[styles.dynamicRowBlock, { borderColor: theme.colors.border, backgroundColor: theme.colors.surface }]}>
-          <View style={styles.dynamicHeader}>
-            <Text style={[styles.dynamicTitle, { color: theme.colors.primary }]}>Business Opp {index + 1}</Text>
-            {businessOps.length > 1 && (
-              <TouchableOpacity onPress={() => removeDynamicRow(setBusinessOps, index)}>
-                <Icon name="trash-outline" size={20} color={theme.colors.error} />
-              </TouchableOpacity>
-            )}
-          </View>
-          {renderDropdown('Funding Source', item.fundingSource, (val) => updateDynamicField(setBusinessOps, index, 'fundingSource', val))}
-          {renderDropdown('Payment Terms', item.paymentTerms, (val) => updateDynamicField(setBusinessOps, index, 'paymentTerms', val))}
-          {renderDropdown('Credit History', item.creditHistory, (val) => updateDynamicField(setBusinessOps, index, 'creditHistory', val))}
-          {renderDropdown('Procurement Channel', item.procurementChannel, (val) => updateDynamicField(setBusinessOps, index, 'procurementChannel', val))}
-          {renderDropdown('Wallet', item.wallet, (val) => updateDynamicField(setBusinessOps, index, 'wallet', val))}
-        </View>
-      ))}
-      <TouchableOpacity 
-        style={[styles.addMoreBtn, { borderColor: theme.colors.primary }]}
-        onPress={() => addDynamicRow(setBusinessOps, { fundingSource: null, paymentTerms: null, creditHistory: null, procurementChannel: null, wallet: null })}
-      >
-        <Icon name="add" size={20} color={theme.colors.primary} style={{ marginRight: 8 }} />
-        <Text style={[styles.addMoreText, { color: theme.colors.primary }]}>Add More Business Opp</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderCompetitor = () => (
-    <View style={styles.formContent}>
-      {competitors.map((item, index) => (
-        <View key={index} style={[styles.dynamicRowBlock, { borderColor: theme.colors.border, backgroundColor: theme.colors.surface }]}>
-          <View style={styles.dynamicHeader}>
-            <Text style={[styles.dynamicTitle, { color: theme.colors.primary }]}>Analysis {index + 1}</Text>
-            {competitors.length > 1 && (
-              <TouchableOpacity onPress={() => removeDynamicRow(setCompetitors, index)}>
-                <Icon name="trash-outline" size={20} color={theme.colors.error} />
-              </TouchableOpacity>
-            )}
-          </View>
-          {renderDropdown('Sutures', item.sutures, (val) => updateDynamicField(setCompetitors, index, 'sutures', val))}
-          {renderDropdown('Airway Management', item.airway, (val) => updateDynamicField(setCompetitors, index, 'airway', val))}
-        </View>
-      ))}
-      <TouchableOpacity 
-        style={[styles.addMoreBtn, { borderColor: theme.colors.primary }]}
-        onPress={() => addDynamicRow(setCompetitors, { sutures: null, airway: null })}
-      >
-        <Icon name="add" size={20} color={theme.colors.primary} style={{ marginRight: 8 }} />
-        <Text style={[styles.addMoreText, { color: theme.colors.primary }]}>Add More Competitor Analysis</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
-      {renderTabs()}
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {activeTab === 'Basic' && renderBasicInfo()}
-        {activeTab === 'Facilities' && renderFacilities()}
-        {activeTab === 'Business' && renderBusinessOpp()}
-        {activeTab === 'Competitor' && renderCompetitor()}
+        {renderBasicInfo()}
         
-        {/* Save Button visible on all tabs */}
+        {/* Save Button */}
         <TouchableOpacity 
           style={[styles.saveBtn, { backgroundColor: theme.colors.primary }]}
           onPress={() => navigation.goBack()}
