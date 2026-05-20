@@ -135,7 +135,7 @@ export const generateAndShareOrderChallanPDF = async (
     `;
   } else {
     // Sales Order layout
-    let totalAmt = 0;
+    let subTotal = 0;
     const rowsHtml =
       detailData.length > 0
         ? detailData
@@ -143,7 +143,7 @@ export const generateAndShareOrderChallanPDF = async (
               const price = parseFloat(row.unit_price || 0);
               const qty = parseFloat(row.quantity || 0);
               const rowTotal = price * qty;
-              totalAmt += rowTotal;
+              subTotal += rowTotal;
               return `<tr>
         <td>${row.stock_id || ''}</td>
         <td>${row.description || ''}</td>
@@ -161,6 +161,50 @@ export const generateAndShareOrderChallanPDF = async (
             })
             .join('')
         : '<tr><td colspan="8" style="text-align: center;">No items found</td></tr>';
+
+    const customerTaxes = headerData.taxes || [];
+    let calculatedTaxes = [];
+    let sumOfPreviousTaxes = 0;
+
+    customerTaxes.forEach((tax, index) => {
+      let rate = parseFloat(tax.tax_rate || 0);
+      let taxValue = 0;
+
+      if (index === customerTaxes.length - 1 && customerTaxes.length > 1) {
+        taxValue = sumOfPreviousTaxes * (rate / 100);
+      } else {
+        taxValue = subTotal * (rate / 100);
+        sumOfPreviousTaxes += taxValue;
+      }
+
+      calculatedTaxes.push({
+        ...tax,
+        calculatedValue: taxValue,
+      });
+    });
+
+    const finalGrandTotal = subTotal + calculatedTaxes.reduce((sum, t) => sum + t.calculatedValue, 0);
+
+    let taxHtml = '';
+    if (calculatedTaxes.length > 0) {
+      taxHtml += `
+      <tr>
+        <td colspan="7" style="text-align: right; padding: 6px;">Sub Total</td>
+        <td style="text-align: right; padding: 6px;">${subTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</td>
+      </tr>
+      `;
+      
+      calculatedTaxes.forEach(tax => {
+        if (tax.calculatedValue > 0) {
+          taxHtml += `
+          <tr>
+            <td colspan="7" style="text-align: right; padding: 6px;">${tax.tax_name || 'Tax'} (${tax.tax_rate}%)</td>
+            <td style="text-align: right; padding: 6px;">${tax.calculatedValue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}</td>
+          </tr>
+          `;
+        }
+      });
+    }
 
     htmlContent = `
     <html>
@@ -228,9 +272,10 @@ export const generateAndShareOrderChallanPDF = async (
           </thead>
           <tbody>
             ${rowsHtml}
+            ${taxHtml}
             <tr>
               <td colspan="7" style="text-align: right; font-weight: bold; padding: 10px;">GRAND TOTAL</td>
-              <td style="text-align: right; font-weight: bold; padding: 10px;">${totalAmt.toLocaleString(
+              <td style="text-align: right; font-weight: bold; padding: 10px;">${finalGrandTotal.toLocaleString(
                 undefined,
                 {
                   minimumFractionDigits: 0,

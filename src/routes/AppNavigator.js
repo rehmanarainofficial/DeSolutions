@@ -38,6 +38,7 @@ import SalesPaymentScreen from '@screens/crm/SalesPaymentScreen';
 import SaleTaskScreen from '@screens/crm/SaleTaskScreen';
 import SupplyInfoScreen from '@screens/crm/SupplyInfoScreen';
 import CustomerBalanceScreen from '@screens/crm/CustomerBalanceScreen';
+import CRMSalesVsTargetScreen from '@screens/crm/CRMSalesVsTargetScreen';
 import FinanceScreen from '@screens/finance/FinanceScreen';
 import AccountDetailScreen from '@screens/dashboard/AccountDetailScreen';
 import LedgerScreen from '@components/ledger/LedgerScreen';
@@ -295,6 +296,11 @@ const AppNavigator = () => {
             <Stack.Screen
               name="CRMAddHospital"
               component={CRMAddHospitalScreen}
+            />
+            <Stack.Screen
+              name="CRMSalesVsTarget"
+              component={CRMSalesVsTargetScreen}
+              options={{ title: 'Sales vs Target' }}
             />
             <Stack.Screen
               name="CRMMonthlyExpense"

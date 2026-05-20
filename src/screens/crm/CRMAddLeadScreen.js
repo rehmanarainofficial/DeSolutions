@@ -1,401 +1,452 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
+  Text,
+  TouchableOpacity,
+  TextInput,
   StyleSheet,
   ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Image,
+  Animated,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
-import { useTheme } from '@config/useTheme';
-import Icon from 'react-native-vector-icons/Ionicons';
 import { Dropdown, MultiSelect } from 'react-native-element-dropdown';
+import Toast from 'react-native-toast-message';
+import { useTheme } from '@config/useTheme';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@store/slices/authSlice';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { launchImageLibrary } from 'react-native-image-picker';
+import {
+  useGetHospitalMutation,
+  useGetCityDropdownMutation,
+  useGetTitleDropdownMutation,
+  useAddHospitalContactMutation,
+} from '@api/baseApi';
 
-// Dummy data for dropdowns
-const titles = [
-  { label: 'Mr.', value: 'Mr' },
-  { label: 'Ms.', value: 'Ms' },
-  { label: 'Dr.', value: 'Dr' },
-  { label: 'Prof.', value: 'Prof' },
-];
-const genders = [
-  { label: 'Male', value: 'Male' },
-  { label: 'Female', value: 'Female' },
-];
-const educationList = [
-  { label: 'MBBS', value: 'MBBS' },
-  { label: 'FCPS', value: 'FCPS' },
-  { label: 'FRCS', value: 'FRCS' },
-  { label: 'MD', value: 'MD' },
-];
-const cities = [
-  { label: 'Karachi', value: 'Karachi' },
-  { label: 'Lahore', value: 'Lahore' },
-  { label: 'Islamabad', value: 'Islamabad' },
-];
-const genericList = [
-  { label: 'Option 1', value: 'opt1' },
-  { label: 'Option 2', value: 'opt2' },
-  { label: 'Option 3', value: 'opt3' },
-];
-const multiGenericList = [
-  { label: 'Item A', value: 'A' },
-  { label: 'Item B', value: 'B' },
-  { label: 'Item C', value: 'C' },
-  { label: 'Item D', value: 'D' },
-];
-
-const CRMAddLeadScreen = ({ navigation }) => {
+const CRMAddLeadScreen = ({ navigation, route }) => {
   const { theme } = useTheme();
-  const styles = getStyles(theme);
+  const user = useSelector(selectCurrentUser);
 
-  const [formData, setFormData] = useState({
-    title: null,
-    personName: '',
-    gender: null,
-    education: null,
-    personalEmail: '',
-    mobileNo: '',
-    city: null,
-    paName: '',
-    paNo: '',
-    facebook: '',
-    linkedin: '',
-    whatsappCommunity: null,
-    salesPerson: null,
-    community: null,
-    surgicalRole: null,
-    adminRole: null,
-    department: null,
-    surgerySpecialty: null,
-    yearOfPractice: null,
-    professionalMembership: null,
-    mainHospital: null,
-    secondaryHospital: null,
-    privateHospital: null,
-    procedureFocus: [],
-    chooseCampaign: [],
-    focusProduct: [],
-    customerSegment: [],
-    workshop: [],
-    conference: [],
-    notes: '',
-    profilePic: null,
-    businessCard: null,
-  });
+  const [personName, setPersonName] = useState('');
+  const [personalEmail, setPersonalEmail] = useState('');
+  const [cellNo, setCellNo] = useState('');
+  const [selectedTitle, setSelectedTitle] = useState(null);
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [selectedHospitals, setSelectedHospitals] = useState([]);
+  
+  const [profilePic, setProfilePic] = useState(null);
+  const [businessCard, setBusinessCard] = useState(null);
 
-  const updateField = (key, value) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-  };
+  const [titles, setTitles] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [hospitals, setHospitals] = useState([]);
 
-  const handleImagePick = (field) => {
-    launchImageLibrary({ mediaType: 'photo', quality: 0.8 }, (response) => {
-      if (response.didCancel) return;
-      if (response.assets && response.assets.length > 0) {
-        updateField(field, response.assets[0].uri);
+  const [getTitleDropdown] = useGetTitleDropdownMutation();
+  const [getCityDropdown] = useGetCityDropdownMutation();
+  const [getHospital] = useGetHospitalMutation();
+  const [addHospitalContact] = useAddHospitalContactMutation();
+
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Animated entrance values
+  const animValues = useRef([]).current;
+  const inputsCount = 8;
+  if (animValues.length === 0) {
+    for (let i = 0; i < inputsCount; i++) {
+      animValues.push({
+        translateY: new Animated.Value(20),
+        opacity: new Animated.Value(0),
+      });
+    }
+  }
+
+  useEffect(() => {
+    fetchDropdowns();
+    // Staggered entrance animation
+    const anims = animValues.map((av, idx) =>
+      Animated.parallel([
+        Animated.timing(av.translateY, {
+          toValue: 0,
+          duration: 450,
+          delay: idx * 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(av.opacity, {
+          toValue: 1,
+          duration: 450,
+          delay: idx * 60,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    Animated.stagger(60, anims).start();
+  }, []);
+
+  const fetchDropdowns = async () => {
+    setLoading(true);
+    try {
+      const titleRes = await getTitleDropdown({ id: user?.id || user?.company_user_id }).unwrap();
+      if (titleRes?.status === 'true') {
+        setTitles(titleRes.data || []);
       }
-    });
+      const cityRes = await getCityDropdown({ id: user?.id || user?.company_user_id }).unwrap();
+      if (cityRes?.status === 'true') {
+        setCities(cityRes.data || []);
+      }
+      const hospRes = await getHospital({ id: user?.id || user?.company_user_id }).unwrap();
+      if (hospRes?.status === 'true') {
+        const hData = hospRes.data || [];
+        const formattedHospitals = hData.map((h, i) => ({
+          ...h,
+          unique_id: h.id ? String(h.id) : h.hospital_id ? String(h.hospital_id) : String(i),
+          name: h.name || h.hospital_name || 'Unknown Hospital',
+        }));
+        setHospitals(formattedHospitals);
+      }
+    } catch (e) {
+      console.log('Error fetching dropdowns:', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      title: 'Add Contact',
-    });
-  }, [navigation]);
+  const validate = () => {
+    if (!selectedTitle) {
+      Toast.show({ type: 'error', text1: 'Validation', text2: 'Please select Title' });
+      return false;
+    }
+    if (!personName || personName.trim() === '') {
+      Toast.show({ type: 'error', text1: 'Validation', text2: 'Person Name is required' });
+      return false;
+    }
+    if (!selectedCity) {
+      Toast.show({ type: 'error', text1: 'Validation', text2: 'Please select City' });
+      return false;
+    }
+    if (!cellNo || cellNo.trim() === '') {
+      Toast.show({ type: 'error', text1: 'Validation', text2: 'Cell No is required' });
+      return false;
+    }
+    if (selectedHospitals.length === 0) {
+      Toast.show({ type: 'error', text1: 'Validation', text2: 'Please select at least one Hospital' });
+      return false;
+    }
+    return true;
+  };
 
-  // Reusable components for consistent styling
-  const renderInput = (label, key, placeholder, keyboardType = 'default') => (
-    <View style={styles.inputContainer}>
-      <Text style={[styles.label, { color: theme.colors.text }]}>{label}</Text>
+  const handlePickImage = async (setter) => {
+    const options = { mediaType: 'photo', quality: 0.5 };
+    const result = await launchImageLibrary(options);
+    if (result.assets && result.assets.length > 0) {
+      setter(result.assets[0]);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+
+    setSubmitting(true);
+    try {
+      const res = await addHospitalContact({
+        user_id: user?.id || user?.company_user_id || '',
+        title: selectedTitle,
+        person_name: personName,
+        city: selectedCity,
+        personal_email: personalEmail,
+        cell_no: cellNo,
+        hospital: selectedHospitals.join(','),
+        profile_pic_name: profilePic,
+        business_card_name: businessCard
+      }).unwrap();
+
+      if (res && String(res.status) === 'true') {
+        Toast.show({ type: 'success', text1: 'Success', text2: res.message || 'Successfully added.' });
+        if (route.params?.onSuccess) {
+          route.params.onSuccess();
+        }
+        navigation.goBack();
+      } else {
+        Toast.show({ type: 'error', text1: 'Failed', text2: res.message || 'Unknown error' });
+      }
+    } catch (e) {
+      console.log('Error submitting form', e);
+      Toast.show({ type: 'error', text1: 'Network Error', text2: 'Could not submit form.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const renderInputAnimated = (
+    index,
+    placeholder,
+    value,
+    setValue,
+    keyboardType,
+  ) => (
+    <Animated.View
+      style={[
+        styles.glassInput,
+        {
+          transform: [{ translateY: animValues[index].translateY }],
+          opacity: animValues[index].opacity,
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
+      ]}>
       <TextInput
-        style={[styles.input, { backgroundColor: theme.colors.background, borderColor: theme.colors.border, color: theme.colors.text }]}
+        style={[styles.textInput, { color: theme.colors.text }]}
         placeholder={placeholder}
         placeholderTextColor={theme.colors.textSecondary}
-        keyboardType={keyboardType}
-        value={formData[key]}
-        onChangeText={(text) => updateField(key, text)}
+        value={value}
+        onChangeText={txt => setValue(txt)}
+        keyboardType={keyboardType || 'default'}
+        selectionColor={theme.colors.primary}
       />
-    </View>
+    </Animated.View>
   );
 
-  const renderDropdown = (label, key, data, placeholder) => (
-    <View style={styles.inputContainer}>
-      <Text style={[styles.label, { color: theme.colors.text }]}>{label}</Text>
-      <Dropdown
-        style={[styles.dropdown, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
-        placeholderStyle={[styles.placeholderStyle, { color: theme.colors.textSecondary }]}
-        selectedTextStyle={[styles.selectedTextStyle, { color: theme.colors.text }]}
-        itemTextStyle={[styles.itemTextStyle, { color: theme.colors.text }]}
-        containerStyle={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border }}
-        data={data}
-        maxHeight={300}
-        labelField="label"
-        valueField="value"
-        placeholder={placeholder}
-        value={formData[key]}
-        onChange={(item) => {
-          updateField(key, item.value);
-        }}
-      />
-    </View>
-  );
-
-  const renderMultiSelect = (label, key, data, placeholder) => (
-    <View style={styles.inputContainer}>
-      <Text style={[styles.label, { color: theme.colors.text }]}>{label}</Text>
-      <MultiSelect
-        style={[styles.dropdown, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
-        placeholderStyle={[styles.placeholderStyle, { color: theme.colors.textSecondary }]}
-        selectedTextStyle={[styles.selectedTextStyle, { color: theme.colors.text }]}
-        itemTextStyle={[styles.itemTextStyle, { color: theme.colors.text }]}
-        containerStyle={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border }}
-        data={data}
-        labelField="label"
-        valueField="value"
-        placeholder={placeholder}
-        value={formData[key]}
-        onChange={(item) => {
-          updateField(key, item);
-        }}
-        selectedStyle={[styles.selectedStyle, { backgroundColor: theme.colors.primary + '20', borderColor: theme.colors.primary }]}
-        renderItem={(item, selected) => (
-          <View style={styles.multiSelectItem}>
-            <Icon
-              name={selected ? 'checkbox' : 'square-outline'}
-              size={20}
-              color={selected ? theme.colors.primary : theme.colors.textSecondary}
-              style={{ marginRight: 8 }}
-            />
-            <Text style={[{ color: theme.colors.text }]}>{item.label}</Text>
+  const renderImagePicker = (index, label, imageState, setImgState) => (
+    <Animated.View
+      style={[
+        styles.imagePickerContainer,
+        {
+          transform: [{ translateY: animValues[index].translateY }],
+          opacity: animValues[index].opacity,
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
+      ]}>
+      <Text style={[styles.imageLabel, { color: theme.colors.textSecondary }]}>{label}</Text>
+      <View style={styles.imagePickerRow}>
+        <TouchableOpacity
+          style={[styles.uploadBtn, { borderColor: theme.colors.border }]}
+          onPress={() => handlePickImage(setImgState)}
+        >
+          <Icon name="image" size={20} color={theme.colors.primary} />
+          <Text style={[styles.uploadText, { color: theme.colors.text }]}>Gallery</Text>
+        </TouchableOpacity>
+        {imageState && (
+          <View style={styles.imagePreviewWrapper}>
+            <Text style={{ color: theme.colors.text, fontSize: 12 }} numberOfLines={1}>
+              {imageState.fileName || 'Selected'}
+            </Text>
+            <TouchableOpacity onPress={() => setImgState(null)}>
+              <Icon name="close-circle" size={20} color={theme.colors.error} />
+            </TouchableOpacity>
           </View>
         )}
-      />
-    </View>
+      </View>
+    </Animated.View>
   );
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        
-        {/* Personal Information */}
-        <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>Personal Information</Text>
-          {renderDropdown('Title', 'title', titles, 'Select Title')}
-          {renderInput('Person Name', 'personName', 'Enter full name')}
-          {renderDropdown('Gender', 'gender', genders, 'Select Gender')}
-          {renderDropdown('Education', 'education', educationList, 'Select Education')}
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
-
-        {/* Contact Information */}
-        <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>Contact Information</Text>
-          {renderInput('Personal Email', 'personalEmail', 'email@example.com', 'email-address')}
-          {renderInput('Mobile No', 'mobileNo', '+92 300 1234567', 'phone-pad')}
-          {renderDropdown('City', 'city', cities, 'Select City')}
-          {renderInput('PA Name', 'paName', "Enter PA's Name")}
-          {renderInput('PA No', 'paNo', "Enter PA's Number", 'phone-pad')}
-          {renderInput('Facebook Profile', 'facebook', 'Profile URL')}
-          {renderInput('LinkedIn Profile', 'linkedin', 'Profile URL')}
-          {renderDropdown('WhatsApp Community', 'whatsappCommunity', genericList, 'Select Community')}
-          {renderDropdown('Sales Person', 'salesPerson', genericList, 'Select Sales Person')}
-        </View>
-
-        {/* Personal Details */}
-        <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>Personal Details</Text>
-          {renderDropdown('Community', 'community', genericList, 'Select Community')}
-          {renderDropdown('Surgical Role', 'surgicalRole', genericList, 'Select Role')}
-          {renderDropdown('Administrative Role', 'adminRole', genericList, 'Select Admin Role')}
-          {renderDropdown('Department', 'department', genericList, 'Select Department')}
-          {renderDropdown('Surgery Specialty', 'surgerySpecialty', genericList, 'Select Specialty')}
-          {renderDropdown('Year of Practice', 'yearOfPractice', genericList, 'Select Years')}
-          {renderDropdown('Professional Membership', 'professionalMembership', genericList, 'Select Membership')}
-          {renderDropdown('Main Hospital', 'mainHospital', genericList, 'Select Main Hospital')}
-          {renderDropdown('Secondary Hospital', 'secondaryHospital', genericList, 'Select Secondary Hospital')}
-          {renderDropdown('Private Hospital', 'privateHospital', genericList, 'Select Private Hospital')}
-        </View>
-
-        {/* Multi-Select Dropdowns without specific section title */}
-        <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          {renderMultiSelect('Procedure Focus', 'procedureFocus', multiGenericList, 'Select Procedure Focus')}
-          {renderMultiSelect('Choose Campaign', 'chooseCampaign', multiGenericList, 'Select Campaigns')}
-          {renderMultiSelect('Choose Focus Product', 'focusProduct', multiGenericList, 'Select Focus Products')}
-          {renderMultiSelect('Choose Customer Segment', 'customerSegment', multiGenericList, 'Select Segments')}
-          {renderMultiSelect('Choose Workshop', 'workshop', multiGenericList, 'Select Workshops')}
-          {renderMultiSelect('Choose Conference', 'conference', multiGenericList, 'Select Conferences')}
+      ) : (
+        <ScrollView
+          contentContainerStyle={{ padding: 20, paddingBottom: 120, gap: 16 }}
+          showsVerticalScrollIndicator={false}>
           
-          <View style={styles.inputContainer}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Notes / Remarks</Text>
-            <TextInput
-              style={[styles.textArea, { backgroundColor: theme.colors.background, borderColor: theme.colors.border, color: theme.colors.text }]}
-              placeholder="Add any notes here..."
-              placeholderTextColor={theme.colors.textSecondary}
-              multiline
-              numberOfLines={4}
-              value={formData.notes}
-              onChangeText={(text) => updateField('notes', text)}
+          <Animated.View
+            style={{
+              transform: [{ translateY: animValues[0].translateY }],
+              opacity: animValues[0].opacity,
+            }}>
+            <Dropdown
+              style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              data={titles}
+              search
+              labelField="description"
+              valueField="sales_code"
+              placeholder="Select Title *"
+              placeholderStyle={{ color: theme.colors.textSecondary }}
+              searchPlaceholder="Search..."
+              value={selectedTitle}
+              onChange={item => setSelectedTitle(item.sales_code)}
+              selectedTextStyle={{ color: theme.colors.text }}
+              itemTextStyle={{ color: theme.colors.text }}
+              containerStyle={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border }}
+              activeColor={theme.colors.border}
             />
-          </View>
-        </View>
+          </Animated.View>
 
-        {/* Attachments Section */}
-        <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.primary }]}>Attachments</Text>
-          
-          <Text style={[styles.label, { color: theme.colors.text }]}>Profile Picture</Text>
-          <TouchableOpacity 
-            style={[styles.imageUploadBtn, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
-            onPress={() => handleImagePick('profilePic')}
-          >
-            {formData.profilePic ? (
-              <Image source={{ uri: formData.profilePic }} style={styles.previewImage} />
-            ) : (
-              <View style={styles.uploadPlaceholder}>
-                <Icon name="camera-outline" size={28} color={theme.colors.primary} />
-                <Text style={[styles.uploadText, { color: theme.colors.textSecondary }]}>Upload Profile Picture</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          {renderInputAnimated(1, 'Person Name *', personName, setPersonName)}
 
-          <Text style={[styles.label, { color: theme.colors.text, marginTop: 16 }]}>Business Card</Text>
-          <TouchableOpacity 
-            style={[styles.imageUploadBtn, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
-            onPress={() => handleImagePick('businessCard')}
-          >
-            {formData.businessCard ? (
-              <Image source={{ uri: formData.businessCard }} style={styles.previewImage} />
-            ) : (
-              <View style={styles.uploadPlaceholder}>
-                <Icon name="id-card-outline" size={28} color={theme.colors.primary} />
-                <Text style={[styles.uploadText, { color: theme.colors.textSecondary }]}>Upload Business Card</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
+          <Animated.View
+            style={{
+              transform: [{ translateY: animValues[2].translateY }],
+              opacity: animValues[2].opacity,
+            }}>
+            <Dropdown
+              style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+              data={cities}
+              search
+              labelField="cityname"
+              valueField="id"
+              placeholder="Select City *"
+              placeholderStyle={{ color: theme.colors.textSecondary }}
+              searchPlaceholder="Search..."
+              value={selectedCity}
+              onChange={item => setSelectedCity(item.id)}
+              selectedTextStyle={{ color: theme.colors.text }}
+              itemTextStyle={{ color: theme.colors.text }}
+              containerStyle={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border }}
+              activeColor={theme.colors.border}
+            />
+          </Animated.View>
 
-        {/* Save Button */}
-        <TouchableOpacity 
-          style={[styles.saveBtn, { backgroundColor: theme.colors.primary }]}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.saveBtnText}>Save Contact</Text>
-        </TouchableOpacity>
-        
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          {renderInputAnimated(3, 'Personal Email', personalEmail, setPersonalEmail, 'email-address')}
+          {renderInputAnimated(4, 'Cell No *', cellNo, setCellNo, 'phone-pad')}
+
+          <Animated.View
+            style={{
+              transform: [{ translateY: animValues[5].translateY }],
+              opacity: animValues[5].opacity,
+            }}>
+            <MultiSelect
+              style={[styles.dropdown, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border, minHeight: 56, height: 'auto', paddingVertical: 10 }]}
+              data={hospitals}
+              search
+              labelField="name"
+              valueField="unique_id"
+              placeholder="Select Hospitals *"
+              placeholderStyle={{ color: theme.colors.textSecondary }}
+              searchPlaceholder="Search..."
+              value={selectedHospitals}
+              onChange={item => setSelectedHospitals(item)}
+              selectedTextStyle={{ color: theme.colors.text }}
+              itemTextStyle={{ color: theme.colors.text }}
+              containerStyle={{ backgroundColor: theme.colors.surface, borderColor: theme.colors.border }}
+              activeColor={theme.colors.border}
+              selectedStyle={[styles.selectedStyle, { backgroundColor: theme.colors.primary + '20', borderColor: theme.colors.primary }]}
+            />
+          </Animated.View>
+
+          {renderImagePicker(6, 'Profile Picture', profilePic, setProfilePic)}
+          {renderImagePicker(6, 'Business Card', businessCard, setBusinessCard)}
+
+          <Animated.View
+            style={{
+              transform: [{ translateY: animValues[7].translateY }],
+              opacity: animValues[7].opacity,
+            }}>
+            <TouchableOpacity
+              style={[
+                styles.submitBtn,
+                { backgroundColor: theme.colors.primary },
+                submitting && styles.submitBtnDisabled,
+              ]}
+              onPress={handleSubmit}
+              disabled={submitting}>
+              {submitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={{ color: '#fff', fontSize: 18, fontWeight: '600' }}>
+                  Submit
+                </Text>
+              )}
+            </TouchableOpacity>
+          </Animated.View>
+        </ScrollView>
+      )}
     </View>
   );
 };
 
-const getStyles = (theme) => StyleSheet.create({
+export default CRMAddLeadScreen;
+
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
-  content: {
-    padding: 16,
-  },
-  sectionCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
+  glassInput: {
     borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 15,
-  },
-  textArea: {
+    paddingHorizontal: 12,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
-    fontSize: 15,
-    minHeight: 100,
-    textAlignVertical: 'top',
+    height: 56,
+    justifyContent: 'center',
+  },
+  textInput: {
+    height: 56,
+    fontSize: 16,
   },
   dropdown: {
-    height: 50,
-    borderWidth: 1,
+    height: 56,
     borderRadius: 12,
-    paddingHorizontal: 16,
-  },
-  placeholderStyle: {
-    fontSize: 15,
-  },
-  selectedTextStyle: {
-    fontSize: 15,
-  },
-  itemTextStyle: {
-    fontSize: 15,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    justifyContent: 'center',
   },
   selectedStyle: {
     borderRadius: 12,
     borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginRight: 6,
+    marginBottom: 6,
   },
-  multiSelectItem: {
+  imagePickerContainer: {
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+  },
+  imageLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+    textTransform: 'uppercase'
+  },
+  imagePickerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    gap: 12,
   },
-  imageUploadBtn: {
-    height: 140,
-    borderWidth: 1,
-    borderRadius: 12,
-    borderStyle: 'dashed',
-    overflow: 'hidden',
-  },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  uploadPlaceholder: {
-    flex: 1,
+  uploadBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    gap: 8,
   },
   uploadText: {
-    marginTop: 8,
-    fontSize: 14,
+    fontWeight: '600',
   },
-  saveBtn: {
-    height: 54,
+  imagePreviewWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#00000008',
+  },
+  submitBtn: {
+    height: 56,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
+    marginTop: 6,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
-  saveBtnText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '700',
+  submitBtnDisabled: {
+    opacity: 0.7,
   },
 });
-
-export default CRMAddLeadScreen;

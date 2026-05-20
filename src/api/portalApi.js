@@ -170,6 +170,23 @@ export const portalApi = baseApi.injectEndpoints({
         };
       },
     }),
+    getSalesTarget: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', 'CRM');
+        formData.append('user_id', body.user_id || '');
+        formData.append('sub_company', body.sub_company || '');
+        formData.append('sub_user_id', body.sub_user_id || '');
+        return {
+          url: 'portal/sales_target.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
   }),
   overrideExisting: true,
 });
@@ -185,4 +202,5 @@ export const {
   usePostPaymentMutation,
   useGetContactsDataMutation,
   useGetHospitalDataMutation,
+  useGetSalesTargetMutation,
 } = portalApi;

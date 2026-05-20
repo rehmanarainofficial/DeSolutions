@@ -256,6 +256,8 @@ const MainScreen = ({ navigation }) => {
       navigation.navigate('SupplyInfoScreen');
     } else if (item.id === 'sample') {
       navigation.navigate('CRMSampleRequest');
+    } else if (item.id === 'sales_target') {
+      navigation.navigate('CRMSalesVsTarget');
     }
   };
 

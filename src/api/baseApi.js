@@ -296,6 +296,67 @@ export const baseApi = createApi({
         };
       },
     }),
+    getCityDropdown: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', 'CRM');
+        formData.append('user_id', body.id);
+        return {
+          url: 'dropdown/city.php',
+          method: 'POST',
+          body: formData,
+          headers: { 'Content-Type': 'multipart/form-data' },
+        };
+      },
+    }),
+    getTitleDropdown: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', 'CRM');
+        formData.append('user_id', body.id);
+        return {
+          url: 'dropdown/title.php',
+          method: 'POST',
+          body: formData,
+          headers: { 'Content-Type': 'multipart/form-data' },
+        };
+      },
+    }),
+    addHospitalContact: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', 'CRM');
+        formData.append('user_id', body.user_id);
+        formData.append('title', body.title);
+        formData.append('person_name', body.person_name);
+        formData.append('city', body.city);
+        formData.append('personal_email', body.personal_email);
+        formData.append('cell_no', body.cell_no);
+        formData.append('hospital', body.hospital);
+        
+        if (body.profile_pic_name) {
+          formData.append('profile_pic_name', {
+            uri: body.profile_pic_name.uri,
+            type: body.profile_pic_name.type || 'image/jpeg',
+            name: body.profile_pic_name.fileName || 'profile.jpg',
+          });
+        }
+        if (body.business_card_name) {
+          formData.append('business_card_name', {
+            uri: body.business_card_name.uri,
+            type: body.business_card_name.type || 'image/jpeg',
+            name: body.business_card_name.fileName || 'business_card.jpg',
+          });
+        }
+
+        return {
+          url: 'portal/hospital_contact_post.php',
+          method: 'POST',
+          body: formData,
+          headers: { 'Content-Type': 'multipart/form-data' },
+        };
+      },
+    }),
   }),
 });
 
@@ -316,6 +377,9 @@ export const {
   useGetBankNamesMutation,
   useGetShippersMutation,
   useGetBranchAddressMutation,
+  useGetCityDropdownMutation,
+  useGetTitleDropdownMutation,
+  useAddHospitalContactMutation,
 } = baseApi;
 
 export default baseApi;
