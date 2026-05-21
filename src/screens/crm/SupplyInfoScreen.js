@@ -92,26 +92,32 @@ const SupplyInfoScreen = ({ navigation }) => {
   }, []);
 
   const getStatusInfo = shipStatus => {
-    const statusValue = String(shipStatus);
+    const statusValue = String(shipStatus || '').trim();
     switch (statusValue) {
       case '0':
+      case 'Not Start Yet':
         return { text: 'Not Start Yet', color: '#64748b', bg: '#f1f5f9' };
       case '1':
+      case 'Booked':
         return { text: 'Booked', color: '#3b82f6', bg: '#dbeafe' };
       case '2':
+      case 'In Transit':
         return { text: 'In Transit', color: '#f59e0b', bg: '#fef3c7' };
       case '3':
+      case 'Arrived At OPS Facility':
         return {
           text: 'Arrived At OPS Facility',
           color: '#8b5cf6',
           bg: '#ede9fe',
         };
       case '4':
+      case 'Out-for-Delivery':
         return { text: 'Out-for-Delivery', color: '#ec4899', bg: '#fce7f3' };
       case '5':
+      case 'Delivered':
         return { text: 'Delivered', color: '#10b981', bg: '#d1fae5' };
       default:
-        return { text: 'In Transit', color: '#f59e0b', bg: '#fef3c7' };
+        return { text: statusValue || 'In Transit', color: '#f59e0b', bg: '#fef3c7' };
     }
   };
 

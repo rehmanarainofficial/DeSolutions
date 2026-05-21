@@ -173,12 +173,65 @@ export const portalApi = baseApi.injectEndpoints({
     getSalesTarget: builder.mutation({
       query: body => {
         const formData = new FormData();
-        formData.append('company', 'CRM');
-        formData.append('user_id', body.user_id || '');
-        formData.append('sub_company', body.sub_company || '');
-        formData.append('sub_user_id', body.sub_user_id || '');
+        formData.append('company', body.company);
+        formData.append('user_id', body.user_id);
+        formData.append('sub_user_id', body.sub_user_id);
+        if (body.years !== undefined && body.years !== null) {
+          formData.append('years', body.years);
+        }
+        if (body.month !== undefined && body.month !== null) {
+          formData.append('month', body.month);
+        }
+        if (body.quater !== undefined && body.quater !== null) {
+          formData.append('quater', body.quater);
+        }
         return {
-          url: 'portal/sales_target.php',
+          url: 'portal/get_salesman_target_sales.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
+    getQuarterDropdown: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', body.company || '');
+        formData.append('user_id', body.user_id || '');
+        return {
+          url: 'dropdown/quater.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
+    getYearsDropdown: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', body.company || '');
+        formData.append('user_id', body.user_id || '');
+        return {
+          url: 'dropdown/years.php',
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        };
+      },
+    }),
+    getMonthDropdown: builder.mutation({
+      query: body => {
+        const formData = new FormData();
+        formData.append('company', body.company || '');
+        formData.append('user_id', body.user_id || '');
+        return {
+          url: 'dropdown/month.php',
           method: 'POST',
           body: formData,
           headers: {
@@ -203,4 +256,7 @@ export const {
   useGetContactsDataMutation,
   useGetHospitalDataMutation,
   useGetSalesTargetMutation,
+  useGetQuarterDropdownMutation,
+  useGetYearsDropdownMutation,
+  useGetMonthDropdownMutation,
 } = portalApi;

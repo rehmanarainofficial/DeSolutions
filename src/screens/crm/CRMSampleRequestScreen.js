@@ -1,4 +1,5 @@
-import React, { useState, useLayoutEffect } from 'react';
+/* eslint-disable react-native/no-inline-styles */
+import React, { useState, useLayoutEffect, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,10 +7,19 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Modal,
+  Platform,
 } from 'react-native';
 import { useTheme } from '@config/useTheme';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Dropdown } from 'react-native-element-dropdown';
+import { useSelector } from 'react-redux';
+import { SearchableDropdown } from '@components/common';
+import {
+  useGetHospitalMutation,
+  useGetHospitalContactsMutation,
+  useGetCityDropdownMutation,
+} from '@api/baseApi';
 
 const DUMMY_DROPDOWN = [
   { label: 'Option 1', value: '1' },
@@ -20,6 +30,7 @@ const DUMMY_DROPDOWN = [
 const CRMSampleRequestScreen = ({ navigation }) => {
   const { theme } = useTheme();
   const styles = getStyles(theme);
+  const user = useSelector(state => state.auth.user);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -32,6 +43,7 @@ const CRMSampleRequestScreen = ({ navigation }) => {
     salePerson: null,
     salesRegion: null,
     hospital: null,
+    hospitalContact: null,
     surgeonName: '',
     surgeonSpecialty: '',
     department: null,
@@ -42,16 +54,114 @@ const CRMSampleRequestScreen = ({ navigation }) => {
     product: null,
     quantity: '',
     batchNo: '',
-    primaryQuantity: '',
     expectedDate: '',
-    secondaryQuantity: '',
     currentBrand: '',
     samplePurpose: '',
   };
   const [products, setProducts] = useState([{ ...emptyProduct }]);
 
+  // API Hooks
+  const [getHospital, { data: hospRes, isLoading: hospLoading }] = useGetHospitalMutation();
+  const [getHospitalContacts, { data: contactRes, isLoading: contactLoading }] = useGetHospitalContactsMutation();
+  const [getCityDropdown, { data: cityRes, isLoading: cityLoading }] = useGetCityDropdownMutation();
+
+  // Calendar Picker State
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [currentProductIndexForDate, setCurrentProductIndexForDate] = useState(null);
+
+  useEffect(() => {
+    getHospital({ id: user?.id });
+    getCityDropdown({ id: user?.id });
+  }, [user?.id, getHospital, getCityDropdown]);
+
+  const handleHospitalSelect = (item) => {
+    setBasicInfo(prev => ({
+      ...prev,
+      hospital: item.debtor_no,
+      hospitalContact: null,
+    }));
+    getHospitalContacts({ hospital_id: item.debtor_no, user_id: user?.id });
+  };
+
   // Remarks State
   const [remarks, setRemarks] = useState('');
+
+  // Calendar Helpers
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+  const handlePrevMonth = () => {
+    setCalendarDate(prev => {
+      const year = prev.getFullYear();
+      const month = prev.getMonth();
+      return new Date(month === 0 ? year - 1 : year, month === 0 ? 11 : month - 1, 1);
+    });
+  };
+
+  const handleNextMonth = () => {
+    setCalendarDate(prev => {
+      const year = prev.getFullYear();
+      const month = prev.getMonth();
+      return new Date(month === 11 ? year + 1 : year, month === 11 ? 0 : month + 1, 1);
+    });
+  };
+
+  const handleDateSelect = (day) => {
+    const formattedDate = `${calendarDate.getFullYear()}-${String(calendarDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    if (currentProductIndexForDate !== null) {
+      updateProductField(currentProductIndexForDate, 'expectedDate', formattedDate);
+    }
+    setIsCalendarOpen(false);
+  };
+
+  const renderCalendarDays = () => {
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+
+    const dayItems = [];
+
+    // Empty spaces for days before the 1st of the month
+    for (let i = 0; i < firstDay; i++) {
+      dayItems.push(<View key={`empty-${i}`} style={styles.calendarDayEmpty} />);
+    }
+
+    // Days in the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const formattedDayDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isSelected = currentProductIndexForDate !== null && products[currentProductIndexForDate]?.expectedDate === formattedDayDate;
+
+      dayItems.push(
+        <TouchableOpacity
+          key={`day-${day}`}
+          style={[
+            styles.calendarDayBtn,
+            isSelected && { backgroundColor: theme.colors.primary }
+          ]}
+          onPress={() => handleDateSelect(day)}
+        >
+          <Text
+            style={[
+              styles.calendarDayText,
+              { color: isSelected ? '#FFFFFF' : theme.colors.text }
+            ]}
+          >
+            {day}
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+
+    return dayItems;
+  };
 
   // Handlers
   const updateBasicField = (key, value) => {
@@ -113,9 +223,46 @@ const CRMSampleRequestScreen = ({ navigation }) => {
         
         {/* Top Section */}
         <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+          <SearchableDropdown
+            label="Hospital"
+            placeholder="Select Hospital"
+            data={hospRes?.data || []}
+            selectedId={basicInfo.hospital}
+            onSelect={handleHospitalSelect}
+            isLoading={hospLoading}
+            idKey="debtor_no"
+            labelKey="name"
+            iconName="business-outline"
+          />
+
+          <SearchableDropdown
+            label="Hospital Contact"
+            placeholder={
+              basicInfo.hospital ? 'Select Contact' : 'First select hospital'
+            }
+            data={contactRes?.data || []}
+            selectedId={basicInfo.hospitalContact}
+            onSelect={item => updateBasicField('hospitalContact', item.id)}
+            isLoading={contactLoading}
+            labelKey="person_name"
+            iconName="people-outline"
+            disabled={!basicInfo.hospital}
+          />
+
           {renderDropdown('Sale Person Name', basicInfo.salePerson, (val) => updateBasicField('salePerson', val))}
-          {renderDropdown('Sales Region/Territory', basicInfo.salesRegion, (val) => updateBasicField('salesRegion', val))}
-          {renderDropdown('Hospital', basicInfo.hospital, (val) => updateBasicField('hospital', val))}
+
+          <SearchableDropdown
+            label="Sales Region/Territory"
+            placeholder="Select City"
+            data={cityRes?.data || []}
+            selectedId={basicInfo.salesRegion}
+            onSelect={item => updateBasicField('salesRegion', item.id)}
+            isLoading={cityLoading}
+            idKey="id"
+            labelKey="cityname"
+            iconName="location-outline"
+          />
+
           {renderInput('Surgeon Name', basicInfo.surgeonName, (text) => updateBasicField('surgeonName', text))}
           {renderInput('Surgeon Specialty', basicInfo.surgeonSpecialty, (text) => updateBasicField('surgeonSpecialty', text))}
           {renderDropdown('Department', basicInfo.department, (val) => updateBasicField('department', val))}
@@ -139,9 +286,32 @@ const CRMSampleRequestScreen = ({ navigation }) => {
               {renderDropdown('Product', item.product, (val) => updateProductField(index, 'product', val))}
               {renderInput('Quantity', item.quantity, (text) => updateProductField(index, 'quantity', text), 'numeric')}
               {renderInput('Batch No.', item.batchNo, (text) => updateProductField(index, 'batchNo', text))}
-              {renderInput('Primary Quantity', item.primaryQuantity, (text) => updateProductField(index, 'primaryQuantity', text), 'numeric')}
-              {renderInput('Expected Date of Use', item.expectedDate, (text) => updateProductField(index, 'expectedDate', text))}
-              {renderInput('Secondary Quantity', item.secondaryQuantity, (text) => updateProductField(index, 'secondaryQuantity', text), 'numeric')}
+              
+              <View style={styles.inputContainer}>
+                <Text style={[styles.label, { color: theme.colors.text }]}>Expected Date of Use</Text>
+                <TouchableOpacity
+                  style={[styles.datePickerBtn, { backgroundColor: theme.colors.background, borderColor: theme.colors.border }]}
+                  onPress={() => {
+                    setCurrentProductIndexForDate(index);
+                    if (item.expectedDate) {
+                      const parsed = new Date(item.expectedDate);
+                      if (!isNaN(parsed)) {
+                        setCalendarDate(parsed);
+                      }
+                    } else {
+                      setCalendarDate(new Date());
+                    }
+                    setIsCalendarOpen(true);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.dateText, { color: item.expectedDate ? theme.colors.text : theme.colors.textSecondary }]}>
+                    {item.expectedDate || 'Select Expected Date of Use'}
+                  </Text>
+                  <Icon name="calendar-outline" size={20} color={theme.colors.primary} />
+                </TouchableOpacity>
+              </View>
+
               {renderInput('Current Brand', item.currentBrand, (text) => updateProductField(index, 'currentBrand', text))}
               {renderInput('Sample Purpose', item.samplePurpose, (text) => updateProductField(index, 'samplePurpose', text))}
             </View>
@@ -151,7 +321,7 @@ const CRMSampleRequestScreen = ({ navigation }) => {
             style={[styles.addMoreBtn, { borderColor: theme.colors.primary }]}
             onPress={addProduct}
           >
-            <Icon name="add" size={20} color={theme.colors.primary} style={{ marginRight: 8 }} />
+            <Icon name="add" size={20} color={theme.colors.primary} style={styles.addIcon} />
             <Text style={[styles.addMoreText, { color: theme.colors.primary }]}>Add More Item</Text>
           </TouchableOpacity>
         </View>
@@ -180,8 +350,52 @@ const CRMSampleRequestScreen = ({ navigation }) => {
           <Text style={styles.submitBtnText}>Submit Request</Text>
         </TouchableOpacity>
         
-        <View style={{ height: 40 }} />
+        <View style={styles.footerSpacer} />
       </ScrollView>
+
+      {/* Premium Custom Calendar Modal */}
+      <Modal
+        visible={isCalendarOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsCalendarOpen(false)}
+      >
+        <View style={styles.calendarModalOverlay}>
+          <TouchableOpacity style={styles.calendarModalBg} onPress={() => setIsCalendarOpen(false)} activeOpacity={1} />
+          <View style={[styles.calendarContainer, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.calendarHeader}>
+              <TouchableOpacity onPress={handlePrevMonth} style={styles.calendarArrowBtn}>
+                <Icon name="chevron-back-outline" size={22} color={theme.colors.primary} />
+              </TouchableOpacity>
+              <Text style={[styles.calendarMonthTitle, { color: theme.colors.text }]}>
+                {months[calendarDate.getMonth()]} {calendarDate.getFullYear()}
+              </Text>
+              <TouchableOpacity onPress={handleNextMonth} style={styles.calendarArrowBtn}>
+                <Icon name="chevron-forward-outline" size={22} color={theme.colors.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.calendarWeekDaysRow}>
+              {daysOfWeek.map((day, dIdx) => (
+                <Text key={dIdx} style={[styles.calendarWeekDayLabel, { color: theme.colors.textSecondary }]}>
+                  {day}
+                </Text>
+              ))}
+            </View>
+
+            <View style={styles.calendarDaysGrid}>
+              {renderCalendarDays()}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.calendarCloseBtn, { borderColor: theme.colors.primary }]}
+              onPress={() => setIsCalendarOpen(false)}
+            >
+              <Text style={[styles.calendarCloseBtnText, { color: theme.colors.primary }]}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -284,6 +498,117 @@ const getStyles = (theme) => StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  datePickerBtn: {
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dateText: {
+    fontSize: 15,
+  },
+  calendarModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  calendarModalBg: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  calendarContainer: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  calendarArrowBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary + '15',
+  },
+  calendarMonthTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  calendarWeekDaysRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    paddingBottom: 8,
+  },
+  calendarWeekDayLabel: {
+    width: '14.28%',
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  calendarDaysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 20,
+  },
+  calendarDayEmpty: {
+    width: '14.28%',
+    aspectRatio: 1,
+  },
+  calendarDayBtn: {
+    width: '14.28%',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    marginVertical: 2,
+  },
+  calendarDayText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  calendarCloseBtn: {
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  calendarCloseBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  addIcon: {
+    marginRight: 8,
+  },
+  footerSpacer: {
+    height: 40,
   },
 });
 
